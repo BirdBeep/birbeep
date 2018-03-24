@@ -2,6 +2,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
+
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
 /**
  * 
  * @author Birdbeep
@@ -12,14 +16,21 @@ import java.util.Scanner;
  */
 
 class ClientHandler extends Thread {
-	private Socket client;
+	private SSLSocket client;
+	private SSLSession sslSession;
 	private Scanner input;
 	private PrintWriter output;
-
-	public ClientHandler(Socket socket) {
+	
+	public ClientHandler(SSLSocket socket) {
 		// Set up reference to associated socket...
+		
 		client = socket;
-
+		sslSession=client.getSession();//Obtenemos la sesión
+		try {
+			String usr=sslSession.getPeerPrincipal().getName();//Sabemos el nombre del cliente que se ha conectado.
+		} catch (SSLPeerUnverifiedException e) {
+			System.out.println(e.getMessage());
+		}
 		try {
 			input = new Scanner(client.getInputStream());
 			output = new PrintWriter(client.getOutputStream(), true);
