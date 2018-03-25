@@ -28,6 +28,10 @@ class ClientHandler extends Thread {
 		sslSession=client.getSession();//Obtenemos la sesión
 		try {
 			String usr=sslSession.getPeerPrincipal().getName();//Sabemos el nombre del cliente que se ha conectado.
+			/**
+			 * aqui el algoritmo para guardar los mensajes es su tabla correspondiente o
+			 * guardar y enviar, dependiendo si no está activo el receptor o sí
+			 */
 		} catch (SSLPeerUnverifiedException e) {
 			System.out.println(e.getMessage());
 		}
