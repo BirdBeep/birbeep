@@ -89,7 +89,7 @@ public class Server {
 	 */
 	private static TrustManager[] getTrusts() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
 		KeyStore trustedStore = KeyStore.getInstance("JKS");
-		trustedStore.load(new FileInputStream("src/Main/certs/server/serverTrustedCerts.jks"), "servpass".toCharArray());
+		trustedStore.load(new FileInputStream("src/Main/certs/server/serverTrustedCerts.jks"), "000000".toCharArray());
 
 		TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 		tmf.init(trustedStore);
