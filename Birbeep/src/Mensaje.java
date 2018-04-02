@@ -1,3 +1,4 @@
+import Entidades.Usuario;
 
 public class Mensaje {
 	private String id;

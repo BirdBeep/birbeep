@@ -3,15 +3,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.SocketException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.sql.SQLException;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -24,29 +23,20 @@ import javax.net.ssl.TrustManagerFactory;
  * 
  * @author BirdBeep
  * 
- * Clase principal del servidor, abre el Socket de escucha y se queda esperando en un try con recursos el desafio de un cliente
- * Mediante el socket de dialogo se llama a una clase que extiende de Thread para procesar los mensajes
+ * Clase principal del servidor, abre el Socket de UDP y la clase TokenHandler lo trata
+ * Mientras se mantiene a la escucha por si se envia un mensaje y debe procesarlo y enviarlo
  *
  */
 public class Server {
 	private static final int PORT = 1234;
 	private static ServerSocket serverSocket;
-	public static void main(String[] args) {
-		try {
-			DatagramSocket datagramSocket=new DatagramSocket(PORT);
-			DatagramPacket inpacket =new DatagramPacket(new byte[256],256);//Comprobar cuanto ocupa "true"
-			datagramSocket.receive(inpacket);
-			
-			InetAddress cli = inpacket.getAddress();
-			/**
-			 * aqui el algoritmo que busca y actualiza el cliente
-			 */
-		} catch (IOException socketUDP) {//Incluye la "SocketException"
-			socketUDP.getMessage();
-		}
+	public static void main(String[] args){
 		TrustManager[] trustManagers=null;
 		KeyManager[] keyManagers=null;
+		DatagramSocket datagramSocket=null;
 		try {
+			datagramSocket=new DatagramSocket(PORT);
+			DatagramPacket inpacket =new DatagramPacket(new byte[256],256);
 			trustManagers = getTrusts();
 			keyManagers = getKeys();
 
@@ -55,8 +45,19 @@ public class Server {
 
 			SSLServerSocketFactory ssf = sc.getServerSocketFactory();
 			serverSocket = ssf.createServerSocket(PORT);
-		} catch (IOException e) {//Para cuando crea el socket
-			System.out.println(e.getMessage());
+			
+			do{
+				datagramSocket.receive(inpacket);
+				TokenHandler tokenhandler = new TokenHandler(inpacket);
+				tokenhandler.start();
+				
+				SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
+				ClientHandler clienthandler = new ClientHandler(clientSocket,keyManagers);
+				clienthandler.start();
+			}while(true);
+			
+		} catch (IOException | SQLException socketUDPEx) {//Aqui está tambien la SQL que se propaga desde los Handler
+			System.out.println(socketUDPEx.getMessage());
 		} catch (NoSuchAlgorithmException e) {//Para cuando obtiene el contexto
 			System.out.println(e.getMessage());
 		} catch (KeyStoreException e) {//Para el almacen de certificados de confianza
@@ -67,21 +68,14 @@ public class Server {
 			System.out.println(e.getMessage());
 		} catch (UnrecoverableKeyException e) {//Para obtener su propio certificado (Metodo getKeys())
 			System.out.println(e.getMessage());
-		}
-		do{
-			try (SSLSocket clientSocket = (SSLSocket) serverSocket.accept()){
-				for (KeyManager k : keyManagers){
-					if (clientSocket.getSession().getPeerCertificates()[0]==k){
-						ClientHandler handler = new ClientHandler(clientSocket);
-						handler.start();	
-					}else{
-						System.out.println("No es un cliente de alta");
-					}
-				}
+		} finally{
+			datagramSocket.close();
+			try {
+				serverSocket.close();
 			} catch (IOException e) {
 				System.out.println(e.getMessage());
 			}
-		}while (true);
+		}
 	}
 	/**
 	 * 
@@ -121,6 +115,5 @@ public class Server {
 
 		KeyManager[] keyManagers = kmf.getKeyManagers();
 		return keyManagers;
-	}
-
+	}	
 }
