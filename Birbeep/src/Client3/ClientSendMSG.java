@@ -68,7 +68,7 @@ public class ClientSendMSG implements Runnable {
 	 */
 	private static TrustManager[] getTrusts() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
 		KeyStore trustedStore = KeyStore.getInstance("JKS");
-		trustedStore.load(new FileInputStream("src/main/certs/client1/rubenTrustedCerts.jks"), "aaaaa".toCharArray());
+		trustedStore.load(new FileInputStream("src/Main/certs/client3/rubenTrustedCerts.jks"), "aaaaa".toCharArray());
 
 		TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 		tmf.init(trustedStore);
@@ -88,7 +88,7 @@ public class ClientSendMSG implements Runnable {
 	 */
 	private static KeyManager[] getKeys() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, UnrecoverableKeyException {
 		KeyStore keyStore = KeyStore.getInstance("JKS");
-		keyStore.load(new FileInputStream("src/main/certs/client1/rubenKey.jks"),"aaaaa".toCharArray());
+		keyStore.load(new FileInputStream("src/Main/certs/client3/rubenKey.jks"),"aaaaa".toCharArray());
 
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 		kmf.init(keyStore, "aaaaa".toCharArray());
