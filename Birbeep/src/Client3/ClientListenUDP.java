@@ -4,8 +4,16 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
+/**
+ * 
+ * @author Birdbeep
+ * 
+ * Recibe las notificaciones del server de que tiene mensajes pendientes
+ *
+ */
+
 public class ClientListenUDP implements Runnable {
-	private static final int PORT = 1234;
+	private static final int PORT = 4321;
 	@Override
 	public void run() {
 		DatagramSocket datagramSocket=null;

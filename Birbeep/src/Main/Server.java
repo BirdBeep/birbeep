@@ -18,18 +18,19 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 /**
  * 
  * @author BirdBeep
  * 
- * Clase principal del servidor, abre el Socket de UDP y la clase TokenHandler lo trata
+ * Clase principal del servidor, abre el Socket UDP y la clase "TokenHandler" lo trata,
  * Mientras se mantiene a la escucha por si se envia un mensaje y debe procesarlo y enviarlo
  *
  */
 public class Server {
-	private static final int PORT = 1234;
+	private static final int PORT = 587;
 	private static ServerSocket serverSocket;
 	public static void main(String[] args){
 		TrustManager[] trustManagers=null;
@@ -52,13 +53,20 @@ public class Server {
 				TokenHandler tokenhandler = new TokenHandler(inpacket);
 				tokenhandler.start();
 				
-				SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
+				SSLSocket dialogo = (SSLSocket) serverSocket.accept();
+				SSLContext sc2 = SSLContext.getInstance("TLS");
+				sc2.init(keyManagers, trustManagers, null);
+
+				SSLSocketFactory ssf2 = sc2.getSocketFactory();
+				SSLSocket clientSocket = (SSLSocket) ssf2.createSocket(dialogo, null, false);//Se crea a partir del socket de dialogo uno nuevo
+				clientSocket.setUseClientMode(true);
+				clientSocket.startHandshake();//Necesita los procedimientos de los socket seguros antes de ser enviado a la clase que lo controla
 				ClientHandler clienthandler = new ClientHandler(clientSocket,keyManagers);
 				clienthandler.start();
 			}while(true);
 			
-		} catch (IOException | SQLException socketUDPEx) {//Aqui está tambien la SQL que se propaga desde los Handler
-			System.out.println(socketUDPEx.getMessage());
+		} catch (IOException | SQLException socketEx) {//Aqui está tambien la SQL que se propaga desde los Handler
+			System.out.println(socketEx.getMessage());
 		} catch (NoSuchAlgorithmException e) {//Para cuando obtiene el contexto
 			System.out.println(e.getMessage());
 		} catch (KeyStoreException e) {//Para el almacen de certificados de confianza
@@ -80,7 +88,7 @@ public class Server {
 	}
 	/**
 	 * 
-	 * @return Array con los certificados de confianza
+	 * @return Array con los certificados de confianza, las excepciones siguientes son tratadas en el "main()"
 	 * @throws KeyStoreException
 	 * @throws NoSuchAlgorithmException
 	 * @throws CertificateException
@@ -99,7 +107,7 @@ public class Server {
 	}
 	/**
 	 * 
-	 * @return Array con la clave pública
+	 * @return Array con la clave pública, las excepciones siguientes son tratadas en el "main()"
 	 * @throws KeyStoreException
 	 * @throws NoSuchAlgorithmException
 	 * @throws CertificateException

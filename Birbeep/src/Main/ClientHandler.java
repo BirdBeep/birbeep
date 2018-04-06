@@ -21,8 +21,9 @@ import Entidades.Usuario;
  * 
  * @author Birdbeep
  * 
- * Solo se ha añadido el bucle para cotejar los certificados
- * Provisionalmente (29-03) Envia el token de que tiene mensajes para leer el cliente correspondiente
+ * Se encarga de guardar el mensaje recibido en la BBDD y 
+ * avisar mediante un token UDP al cliente que tiene nuevos mensajes
+ * 
  *
  */
 
@@ -32,12 +33,19 @@ class ClientHandler extends Thread {
 	private Scanner input;
 	private PrintWriter output;
 	private KeyManager[] cert;
-	private static final int PORT = 1234;
+	private static final int PORT = 4321;
 	private static final String TOKEN="true";//Esto avisa al cliente de que tiene mensajes para leer..
 	private UsuarioDAO serv;
 	ConexionMySQL con;
 	String ipDestino;
 	
+	/**
+	 * Constructor de la clase, inicializa: la sesión del cliente, un servicio para interactuar con la capa DAO y
+	 * los flujos del socket.
+	 * @param socket seguro recibido desde el servidor
+	 * @param keyManagers con los certificados desde el servidor
+	 * @throws SQLException si hay problemas al inicializar la conexión
+	 */
 	public ClientHandler(SSLSocket socket,KeyManager[] keyManagers) throws SQLException {
 		// Set up reference to associated socket...
 		con=new ConexionMySQL();
@@ -49,12 +57,12 @@ class ClientHandler extends Thread {
 			input = new Scanner(client.getInputStream());
 			output = new PrintWriter(client.getOutputStream(), true);
 		} catch (IOException ioEx) {
-			ioEx.printStackTrace();
+			System.out.println(ioEx.getMessage());
 		}
 	}
 /**
  * Envia un token UDP al cliente correspondiente (cli) para avisar de que hay nuevos mensajes
- * @param cli
+ * @param cli que nos lo proporciona el mensaje desde el cliente emisor
  */
 	private void sendToken(String cli) {
 		Usuario user = new Usuario();
@@ -84,7 +92,7 @@ class ClientHandler extends Thread {
 			for (KeyManager k : cert){
 				if (client.getSession().getPeerCertificates()[0]==k){
 					//Aqui ya hemos comprobado que es quien dice ser
-					//Hacer la compresión HASH y almacenar en BBDD el mensaje
+					//to-do Hacer la compresión HASH y almacenar en BBDD el mensaje
 					sendToken(input.nextLine());
 				}else{
 					System.out.println("No es un cliente de alta");
@@ -93,11 +101,11 @@ class ClientHandler extends Thread {
 		} catch (SSLPeerUnverifiedException e) {
 			System.out.println(e.getMessage());
 		}
-		String received;
+		String received="";
 		do {
 			// Accept message from client on
 			// the socket's input stream...
-			received = input.nextLine();
+			//received = input.nextLine(); SE HA IGUALADO LA VAR A VACIO Y EVITA UNA EXCEPTION DE TIPO "No line found"
 
 			// Echo message back to client on
 			// the socket's output stream...

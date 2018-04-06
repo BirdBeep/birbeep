@@ -30,14 +30,14 @@ public class UsuarioDAO {
 			orden.setString(1, usu.getId());
 			datos=orden.executeQuery();
 			if (datos.next()){
-				usuario.setId(datos.getString(0));
-				usuario.setUsername(datos.getString(1));
-				usuario.setPassword(datos.getString(2));
-				usuario.setNombre(datos.getString(3));
-				usuario.setApellidos(datos.getString(4));
-				usuario.setIp(datos.getString(5));
-				usuario.setUltimaConexion(datos.getDate(6));
-				usuario.setActivo(datos.getBoolean(7));
+				usuario.setId(datos.getString(1));
+				usuario.setUsername(datos.getString(2));
+				usuario.setPassword(datos.getString(3));
+				usuario.setNombre(datos.getString(4));
+				usuario.setApellidos(datos.getString(5));
+				usuario.setIp(datos.getString(6));
+				usuario.setUltimaConexion(datos.getDate(7));
+				usuario.setActivo(datos.getBoolean(8));
 			}
 		//} catch (SQLException e) {
 			//e.getMessage();

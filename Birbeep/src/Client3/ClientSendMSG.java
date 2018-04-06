@@ -19,9 +19,15 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-
+/**
+ * 
+ * @author Birdbeep
+ * Envia un mensaje seguro al servidor para que lo gestione, el mensaje debe contener información 
+ * del destinatario
+ *
+ */
 public class ClientSendMSG implements Runnable {
-	private static final int PORT = 1234;
+	private static final int PORT = 587;
 	private static InetAddress server;
 	@Override
 	public void run() {
@@ -59,7 +65,7 @@ public class ClientSendMSG implements Runnable {
 	}
 	/**
 	 * 
-	 * @return Array con los certificados de confianza
+	 * @return Array con los certificados de confianza, las excepciones siguientes son tratadas en el "run()"
 	 * @throws KeyStoreException
 	 * @throws NoSuchAlgorithmException
 	 * @throws CertificateException
@@ -78,7 +84,7 @@ public class ClientSendMSG implements Runnable {
 	}
 	/**
 	 * 
-	 * @return Array con la clave pública
+	 * @return Array con la clave pública, las excepciones siguientes son tratadas en el "run()"
 	 * @throws KeyStoreException
 	 * @throws NoSuchAlgorithmException
 	 * @throws CertificateException
