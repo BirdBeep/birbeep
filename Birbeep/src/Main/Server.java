@@ -30,14 +30,15 @@ import javax.net.ssl.TrustManagerFactory;
  *
  */
 public class Server {
-	private static final int PORT = 587;
+	private static final int PORT = 465;//Evita la excepción "Unrecognized SSL message,plain text conection?" 587
+	private static final int PORT_UDP=1234;
 	private static ServerSocket serverSocket;
 	public static void main(String[] args){
 		TrustManager[] trustManagers=null;
 		KeyManager[] keyManagers=null;
 		DatagramSocket datagramSocket=null;
 		try {
-			datagramSocket=new DatagramSocket(PORT);
+			datagramSocket=new DatagramSocket(PORT_UDP);
 			DatagramPacket inpacket =new DatagramPacket(new byte[256],256);
 			trustManagers = getTrusts();
 			keyManagers = getKeys();
@@ -49,17 +50,17 @@ public class Server {
 			serverSocket = ssf.createServerSocket(PORT);
 			
 			do{
-				datagramSocket.receive(inpacket);
+				datagramSocket.receive(inpacket);//Esperando...
 				TokenHandler tokenhandler = new TokenHandler(inpacket);
 				tokenhandler.start();
 				
-				SSLSocket dialogo = (SSLSocket) serverSocket.accept();
+				SSLSocket dialogo = (SSLSocket) serverSocket.accept();//Esperando...
 				SSLContext sc2 = SSLContext.getInstance("TLS");
 				sc2.init(keyManagers, trustManagers, null);
 
 				SSLSocketFactory ssf2 = sc2.getSocketFactory();
 				SSLSocket clientSocket = (SSLSocket) ssf2.createSocket(dialogo, null, false);//Se crea a partir del socket de dialogo uno nuevo
-				clientSocket.setUseClientMode(true);
+				//clientSocket.setUseClientMode(true);
 				clientSocket.startHandshake();//Necesita los procedimientos de los socket seguros antes de ser enviado a la clase que lo controla
 				ClientHandler clienthandler = new ClientHandler(clientSocket,keyManagers);
 				clienthandler.start();

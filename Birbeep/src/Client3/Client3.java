@@ -28,15 +28,15 @@ import javax.net.ssl.TrustManagerFactory;
  * 
  * @author Birdbeep
  * 
- * Envia un aviso al servidor de que está conectado para que éste actualice su estado
- * (Evento lanzado por la interfaz de user??)
- * Se conecta al servidor mediante el contexto SSL
- * Abre los flujos I/O para el intercambio de mensajes
+ * Envia un aviso al servidor de que está conectado para que éste actualice su estado (Evento lanzado por la interfaz de user??)
+ * Instancia un hilo para escuchar los posibles mensajes UDP del server
+ * Instancia un hilo para enviar mensajes TCP seguros al server
+ * Inicia los hilos.
  *
  */
 
 public class Client3 {
-	private static final int PORT = 1234;
+	private static final int PORT_UDP = 1234;
 	private static InetAddress server;
 	private static final String TOKEN = "client3";
 	public static void main(String[] args) {
@@ -48,7 +48,7 @@ public class Client3 {
 		}
 		try {
 			socketUDP=new DatagramSocket();
-			DatagramPacket outPacket=new DatagramPacket(TOKEN.getBytes(),TOKEN.length(),server,PORT);
+			DatagramPacket outPacket=new DatagramPacket(TOKEN.getBytes(),TOKEN.length(),server,PORT_UDP);
 			socketUDP.send(outPacket);
 		} catch (IOException eSocketEx) {//Incluye la "SocketException"
 			System.out.println("El servidor no está operativo!");

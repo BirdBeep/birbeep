@@ -33,7 +33,7 @@ class ClientHandler extends Thread {
 	private Scanner input;
 	private PrintWriter output;
 	private KeyManager[] cert;
-	private static final int PORT = 4321;
+	private static final int PORT_UDP = 4321;
 	private static final String TOKEN="true";//Esto avisa al cliente de que tiene mensajes para leer..
 	private UsuarioDAO serv;
 	ConexionMySQL con;
@@ -47,7 +47,6 @@ class ClientHandler extends Thread {
 	 * @throws SQLException si hay problemas al inicializar la conexión
 	 */
 	public ClientHandler(SSLSocket socket,KeyManager[] keyManagers) throws SQLException {
-		// Set up reference to associated socket...
 		con=new ConexionMySQL();
 		client = socket;
 		sslSession=client.getSession();//Obtenemos la sesión
@@ -76,7 +75,7 @@ class ClientHandler extends Thread {
 		DatagramSocket socketUDP=null;
 		try {
 			socketUDP=new DatagramSocket();
-			DatagramPacket outPacket=new DatagramPacket(TOKEN.getBytes(),TOKEN.length(),null,PORT);//FALTA LA IP DE DESTINO (tiene que ser la obtenida en idpDestino)
+			DatagramPacket outPacket=new DatagramPacket(TOKEN.getBytes(),TOKEN.length(),null,PORT_UDP);//FALTA LA IP DE DESTINO (tiene que ser la obtenida en idpDestino)
 			socketUDP.send(outPacket);
 		} catch (IOException eSocketEx) {//Incluye la "SocketException"
 			System.out.println("El cliente no está operativo!");
@@ -93,6 +92,8 @@ class ClientHandler extends Thread {
 				if (client.getSession().getPeerCertificates()[0]==k){
 					//Aqui ya hemos comprobado que es quien dice ser
 					//to-do Hacer la compresión HASH y almacenar en BBDD el mensaje
+					
+					//recuperar el id de cliente destinatario desde el mensaje enviado(pasar el id al siguiente método)
 					sendToken(input.nextLine());
 				}else{
 					System.out.println("No es un cliente de alta");

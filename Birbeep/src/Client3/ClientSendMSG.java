@@ -27,13 +27,14 @@ import javax.net.ssl.TrustManagerFactory;
  *
  */
 public class ClientSendMSG implements Runnable {
-	private static final int PORT = 587;
+	private static final int PORT = 465;//Evita la excepción "Unrecognized SSL message,plain text conection?" 587
 	private static InetAddress server;
 	@Override
 	public void run() {
 		TrustManager[] trustManagers=null;
 		KeyManager[] keyManagers=null;
 		try {
+			server=InetAddress.getLocalHost();
 			trustManagers = getTrusts();
 			keyManagers = getKeys();
 			SSLContext sc = SSLContext.getInstance("TLS");
@@ -45,7 +46,7 @@ public class ClientSendMSG implements Runnable {
 			
 			Scanner input = new Scanner(client.getInputStream());
 			PrintWriter output = new PrintWriter(client.getOutputStream(), true);
-			output.println("client2");//Este es el destinatario
+			output.println("client1");//Este es el destinatario
 			
 	}catch(NoSuchAlgorithmException e) {//Para cuando obtiene el contexto
 		System.out.println(e.getMessage());
@@ -56,11 +57,11 @@ public class ClientSendMSG implements Runnable {
 	} catch (UnrecoverableKeyException e) {//Para obtener su propio certificado (Metodo getKEys())
 		System.out.println(e.getMessage());
 	} catch (FileNotFoundException e) {//Para cuando recupera el fichero de la ruta 
-		e.getMessage();
+		System.out.println(e.getMessage());
 	} catch (IOException e) {
-		e.getMessage();
+		System.out.println(e.getMessage());
 	} catch (KeyManagementException e) {//Para cuando inicializa el alamcen y su certificado en el contexto SSL
-		e.getMessage();
+		System.out.println(e.getMessage());
 	}
 	}
 	/**
