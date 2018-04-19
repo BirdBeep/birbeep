@@ -19,10 +19,12 @@ public class SendMSG1 extends Thread{
 	 */
 	public void run(){
 		try {
-			Scanner input = new Scanner(client.getInputStream());
+			Scanner input = new Scanner(client.getInputStream());//Debe recibir los mensajes pendientes
 			PrintWriter output = new PrintWriter(client.getOutputStream(), true);
-			output.println("client3");//Este es el destinatario
-		} catch (IOException e) {
+			output.println("Ruben");//Este es el receptor HAY QUE ENVIAR EL ID
+			output.println("Sebas");//Emisor, ENVIAR ID!!!!
+			output.println("probando....");//Mensaje(Esto va en un sobre encriptado)Se obtendrá de una clase programada por Sebas
+			} catch (IOException e) {
 			System.out.println(e.getMessage());;
 		}
 	}

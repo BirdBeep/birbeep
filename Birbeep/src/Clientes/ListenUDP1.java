@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 import DAO.UsuarioDAO;
 import Entidades.ConexionMySQL;
-import Entidades.Usuario;
+import Entidades.Usuarios;
 /**
  * 
  * @author Birdbeep
@@ -42,19 +42,23 @@ public class ListenUDP1 extends Thread {
  */
 class TokenHandler1 extends Thread {
 	ConexionMySQL con;
-	String id;
+	String Token;
 	UsuarioDAO serv;
 	/**
-	 * Constructor que inicializa: un identificador que lo obtiene del param "in" y un servicio para interactuar con la capa DAO 
+	 * Constructor que inicializa: un String que es el aviso del server que lo obtiene del param "in" y un servicio para interactuar con la capa DAO 
 	 * @param in es el paquete recibido en el server
 	 * @throws SQLException que tratará "run()"
 	 */
 	public TokenHandler1(DatagramPacket in) throws SQLException{
 		con=new ConexionMySQL();
-		id = new String(in.getData(),0,in.getLength());
+		Token = new String(in.getData(),0,in.getLength());
 		serv=new UsuarioDAO(con.getConexion());
 	}
 	public void run(){
+		if (Token.equals("true")){
+			//El server debe mandar los mensajes de client1 
+		}
+		/*
 		Usuario user = new Usuario();
 		user.setId(id);
 		try {
@@ -67,7 +71,7 @@ class TokenHandler1 extends Thread {
 			
 		} catch (SQLException e) {//para la conexion, va a tratar tambien en el caso que se propague desde DAO
 			System.out.println(e.getMessage());
-		}
+		}*/
 	}
 }
 

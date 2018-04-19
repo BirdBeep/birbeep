@@ -14,9 +14,12 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
+import DAO.ComunicacionDAO;
+import DAO.ConexionDAO;
 import DAO.UsuarioDAO;
 import Entidades.ConexionMySQL;
-import Entidades.Usuario;
+import Entidades.Conexiones;
+import Entidades.Usuarios;
 /**
  * 
  * @author Birdbeep
@@ -28,14 +31,16 @@ import Entidades.Usuario;
  */
 
 class ClientHandler extends Thread {
-	private SSLSocket client;
+	private Socket client;
 	private SSLSession sslSession;
 	private Scanner input;
 	private PrintWriter output;
 	private KeyManager[] cert;
 	private static final int PORT_UDP = 60000;
 	private static final String TOKEN="true";//Esto avisa al cliente de que tiene mensajes para leer..
-	private UsuarioDAO serv;
+	private UsuarioDAO serv1;
+	private ComunicacionDAO serv2;
+	private ConexionDAO serv3; 
 	ConexionMySQL con;
 	String ipDestino;
 	
@@ -46,12 +51,14 @@ class ClientHandler extends Thread {
 	 * @param keyManagers con los certificados desde el servidor
 	 * @throws SQLException si hay problemas al inicializar la conexión
 	 */
-	public ClientHandler(SSLSocket socket,KeyManager[] keyManagers) throws SQLException {
+	public ClientHandler(Socket socket,KeyManager[] keyManagers) throws SQLException {
 		con=new ConexionMySQL();
 		client = socket;
 		//sslSession=client.getSession();//Obtenemos la sesión
 		//cert=keyManagers;
-		serv=new UsuarioDAO(con.getConexion());
+		serv1=new UsuarioDAO(con.getConexion());
+		serv2=new ComunicacionDAO(con.getConexion());
+		serv3=new ConexionDAO(con.getConexion());
 		try {
 			input = new Scanner(client.getInputStream());
 			output = new PrintWriter(client.getOutputStream(), true);
@@ -61,9 +68,21 @@ class ClientHandler extends Thread {
 	}
 
 	public void run() {
-		System.out.println(input.nextLine());
-		//sendToken(idReceptor);
-		/**try {
+		String receptor=input.nextLine();//Primer campo con el receptor
+		String emisor=input.nextLine();//Segundo campo con el emisor
+		Usuarios usu_recep=null;
+		Usuarios user = new Usuarios();
+		user.setId(receptor);
+		try {
+			serv3.altaConexion(client.getInetAddress().toString(),emisor);
+			usu_recep=serv1.recuperarUsuario(user);
+			serv2.insertarMensaje(usu_recep.getId(),emisor,input.nextLine());//Tercer campo con el sobre
+			sendToken(usu_recep);
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		/**
+		try {
 			String usr=sslSession.getPeerPrincipal().getName();//Sabemos el nombre del cliente que se ha conectado.
 			for (KeyManager k : cert){
 				if (client.getSession().getPeerCertificates()[0]==k){
@@ -106,19 +125,17 @@ class ClientHandler extends Thread {
 	 * Envia un token UDP al cliente correspondiente (cli) para avisar de que hay nuevos mensajes
 	 * @param cli que nos lo proporciona el mensaje desde el cliente emisor
 	 */
-		private void sendToken(String cli) {
-			Usuario user = new Usuario();
-			user.setId(cli);
+		private void sendToken(Usuarios cli) {
+			Conexiones c=null;
 			try {
-				Usuario actual=serv.recuperarUsuario(user);
-				ipDestino=actual.getIp();
-			} catch (SQLException e) {//para la conexion, va a tratar tambien en el caso que se propague desde DAO
+				c=serv3.obtenerUltimaCon(cli.getId());
+			} catch (SQLException e) {
 				System.out.println(e.getMessage());
 			}
 			DatagramSocket socketUDP=null;
 			try {
 				socketUDP=new DatagramSocket();
-				DatagramPacket outPacket=new DatagramPacket(TOKEN.getBytes(),TOKEN.length(),null,PORT_UDP);//FALTA LA IP DE DESTINO (tiene que ser la obtenida en idpDestino)
+				DatagramPacket outPacket=new DatagramPacket(TOKEN.getBytes(),TOKEN.length(),InetAddress.getByName(c.getIp()),PORT_UDP);
 				socketUDP.send(outPacket);
 			} catch (IOException eSocketEx) {//Incluye la "SocketException"
 				System.out.println("El cliente no está operativo!");

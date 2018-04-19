@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -45,7 +46,7 @@ public class Server {
 			serverSocket = ssf.createServerSocket(PORT);
 			
 			do{
-				SSLSocket dialogo = (SSLSocket) serverSocket.accept();//Esperando...
+				Socket dialogo = (SSLSocket) serverSocket.accept();//Esperando...
 				ClientHandler clienthandler = new ClientHandler(dialogo,keyManagers);
 				clienthandler.start();
 			}while(true);

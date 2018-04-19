@@ -5,7 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import Entidades.Usuario;
+import Entidades.Usuarios;
 import Util.DbQuery;
 
 public class UsuarioDAO {
@@ -21,10 +21,10 @@ public class UsuarioDAO {
 	 * @return Usuario
 	 * @throws SQLException
 	 */
-	public Usuario recuperarUsuario(Usuario usu) throws SQLException{
+	public Usuarios recuperarUsuario(Usuarios usu) throws SQLException{
 		PreparedStatement orden=null;
 		ResultSet datos=null;
-		Usuario usuario=new Usuario();
+		Usuarios usuario=new Usuarios();
 		//try {
 			orden =con.prepareStatement(DbQuery.getUser());
 			orden.setString(1, usu.getId());
@@ -35,9 +35,8 @@ public class UsuarioDAO {
 				usuario.setPassword(datos.getString(3));
 				usuario.setNombre(datos.getString(4));
 				usuario.setApellidos(datos.getString(5));
-				usuario.setIp(datos.getString(6));
+				usuario.setEmail(datos.getString(6));
 				usuario.setUltimaConexion(datos.getDate(7));
-				usuario.setActivo(datos.getBoolean(8));
 			}
 		//} catch (SQLException e) {
 			//e.getMessage();
@@ -52,7 +51,7 @@ public class UsuarioDAO {
 	 * @param usu
 	 * @throws SQLException
 	 */
-	public void activarUsuario(Usuario usu) throws SQLException{
+	public void activarUsuario(Usuarios usu) throws SQLException{
 		PreparedStatement orden=con.prepareStatement(DbQuery.setUser());
 		orden.setString(1, usu.getId());
 		orden.executeUpdate();

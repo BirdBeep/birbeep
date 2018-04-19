@@ -104,7 +104,7 @@ public class Client1 {
 	 */
 	private static KeyManager[] getKeys() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, UnrecoverableKeyException {
 		KeyStore keyStore = KeyStore.getInstance("JKS");
-		keyStore.load(new FileInputStream("src/Main/certs/client3/sebasKey.jks"),"123456".toCharArray());
+		keyStore.load(new FileInputStream("src/Main/certs/client1/sebasKey.jks"),"123456".toCharArray());
 
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 		kmf.init(keyStore, "123456".toCharArray());
