@@ -47,7 +47,7 @@ public class Server {
 			
 			do{
 				Socket dialogo = (SSLSocket) serverSocket.accept();//Esperando...
-				ClientHandler clienthandler = new ClientHandler(dialogo,keyManagers);
+				ClientHandler clienthandler = new ClientHandler(dialogo);
 				clienthandler.start();
 			}while(true);
 			

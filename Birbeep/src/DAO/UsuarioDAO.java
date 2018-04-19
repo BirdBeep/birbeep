@@ -46,14 +46,4 @@ public class UsuarioDAO {
 		//}
 		return usuario;
 	}
-	/**
-	 * Le pasamos un usuario recuperado en de la BBDD y actualizamos su atributo "activo"
-	 * @param usu
-	 * @throws SQLException
-	 */
-	public void activarUsuario(Usuarios usu) throws SQLException{
-		PreparedStatement orden=con.prepareStatement(DbQuery.setUser());
-		orden.setString(1, usu.getId());
-		orden.executeUpdate();
-	}
 }

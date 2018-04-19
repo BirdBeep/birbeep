@@ -8,6 +8,10 @@ import javax.net.ssl.SSLSocket;
 
 public class SendMSG1 extends Thread{
 	private SSLSocket client;
+	/**
+	 * Cuando se instancia el thread se inicializa el socket seguro de diálogo
+	 * @param client
+	 */
 	public SendMSG1(SSLSocket client){
 		this.client=client;
 	}
@@ -21,8 +25,8 @@ public class SendMSG1 extends Thread{
 		try {
 			Scanner input = new Scanner(client.getInputStream());//Debe recibir los mensajes pendientes
 			PrintWriter output = new PrintWriter(client.getOutputStream(), true);
-			output.println("Ruben");//Este es el receptor HAY QUE ENVIAR EL ID
-			output.println("Sebas");//Emisor, ENVIAR ID!!!!
+			output.println("client3");//Este es el receptor HAY QUE ENVIAR EL ID, quizá un fichero de properties para almacenar los contactos
+			output.println("client1");//Emisor, ENVIAR ID!!!!
 			output.println("probando....");//Mensaje(Esto va en un sobre encriptado)Se obtendrá de una clase programada por Sebas
 			} catch (IOException e) {
 			System.out.println(e.getMessage());;

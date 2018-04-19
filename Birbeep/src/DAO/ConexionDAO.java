@@ -1,9 +1,13 @@
 package DAO;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import Entidades.Conexiones;
 import Entidades.Mensajes;
@@ -17,18 +21,18 @@ public class ConexionDAO {
 	}
 	
 	public void altaConexion(String ip,String user)throws SQLException {
-		String now=new java.util.Date().toString();
-		PreparedStatement orden=null;
-		ResultSet datos=null;
+		Calendar cal = Calendar.getInstance();
+		cal.set(Calendar.YEAR, Calendar.MONTH, Calendar.DATE, Calendar.HOUR_OF_DAY, Calendar.MINUTE);
+		java.sql.Date now = new java.sql.Date(cal.getTimeInMillis());
+	    PreparedStatement orden=null;
 		orden =con.prepareStatement(DbQuery.insertConexion());
-		//orden.setString(1, idUser); Como van las id de las tablas?? Autoincrement VS Comunes
-		orden.setString(2, ip);
-		orden.setString(3, now);
-		orden.setString(4, user);
-		datos=orden.executeQuery();
+		orden.setString(1, ip);
+		orden.setString(2, user);
+		orden.setDate(3, now);
+		orden.executeUpdate();
 	}
 
-	public Conexiones obtenerUltimaCon(String id)throws SQLException{
+	public Conexiones obtenerUltimaCon(String id)throws SQLException{//Comprobar los campos
 		PreparedStatement orden=null;
 		ResultSet datos=null;
 		Conexiones conexion = new Conexiones();
