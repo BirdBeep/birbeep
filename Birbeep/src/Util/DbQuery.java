@@ -7,14 +7,15 @@ package Util;
  *
  */
 public class DbQuery {
-private static final String GETUSERID="select idUser,userName,password,nombre,apellidos,email,ultima_conexion from usuarios where idUser=?";
+private static final String GETUSERID="select idUser,password,nombre,apellidos,email,ultima_conexion from usuarios where idUser=?";
 private static final String INSERTMSG="insert into mensajes (idMensaje,emisor,receptor,texto,conversacion,fecha) values(0,?,?,?,?,now())";//Alomejor hay que pasar id vacio y fecha que tiene autoincrement
 private static final String INSERTCON="insert into conexiones (idConexion, ip, usuario, ultima_actualizacion) values(0,?,?,?)";
-private static final String GETLASTCON="select idConexion, ip, usario, ultima_actualizacion from conexiones where usuario=? order by 1 desc limit 1";
-private static final String INSERTCONVER="insert into conversaciones values()";
-private static final String GETUSCONVER="select userEmisor, userReceptor, idConversacion from participantes where userEmisor=? and userReceptor=?";
-private static final String GETCONVER="select idConversacion from conversaciones order by 1 desc limit 1";
-private static final String INSERTUSCONVER="insert into participantes (userEmisor, userReceptor, idConversacion) values(?,?,?)";
+private static final String GETLASTCON="select idConexion, ip, usuario, ultima_actualizacion from conexiones where usuario=? order by 1 desc limit 1";
+private static final String INSERTCONVER="insert into conversaciones values(?)";
+private static final String GETUSCONVER="select user, idConversacion from participantes where user=? and idConversacion=?";
+private static final String GETCONVER="select idConversacion from conversaciones where idConversacion=?";
+private static final String INSERTUSCONVER="insert into participantes (user, idConversacion) values(?,?)";
+private static final String GETMENSAJES="select idMensaje, emisor, receptor, texto, conversacion, fecha from mensajes where emisor=? and conversacion=?";
 public static String getUser(){
 	return GETUSERID;
 }
@@ -38,5 +39,8 @@ public static String getConver(){
 }
 public static String setUsersConver(){
 	return INSERTUSCONVER;
+}
+public static String getMensajes(){
+	return GETMENSAJES;
 }
 }

@@ -5,26 +5,57 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import Entidades.Conversaciones;
 import Util.DbQuery;
 
 public class ConversacionDAO {
+	private static final int MYSQL_DUPLICATE_PK = 1062;
 	private Connection con;
 	public ConversacionDAO(Connection con) {
 		this.con = con;
 	}
-	public void altaConversacion() throws SQLException {
+	public boolean altaConversacion(Conversaciones conver) {
 		PreparedStatement orden=null;
-		orden =con.prepareStatement(DbQuery.setConver());
-		orden.executeUpdate();
+		try {
+			orden =con.prepareStatement(DbQuery.setConver());
+			orden.setString(1, conver.getIdConversacion());
+			orden.executeUpdate();
+		} catch (SQLException e) {
+			if (e.getErrorCode() == MYSQL_DUPLICATE_PK) {
+				return false;
+			}
+			System.out.println(e.getMessage());
+		} finally{
+			try {
+				orden.close();
+				//datos.close();
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			}
+		}
+		return true;
 	}
-	public int recuperarConv() throws SQLException {
-		int c=-1;
+	public Conversaciones recuperarConv(String idConver)  {
+		Conversaciones c=new Conversaciones();
 		PreparedStatement orden=null;
 		ResultSet datos=null;
-		orden =con.prepareStatement(DbQuery.getConver());//Buscar la opcion que no es Prepared ya que no estamos enviando params
-		datos=orden.executeQuery();
-		if(datos.next()){
-			c=datos.getInt(1);
+		try {
+			orden =con.prepareStatement(DbQuery.getConver());
+			orden.setString(1, idConver);
+			datos=orden.executeQuery();
+			if(datos.next()){
+				c.setIdConversacion(datos.getString(1));
+				//c.setFecha(datos.getDate(2));
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		} finally{
+			try {
+				orden.close();
+				datos.close();
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			}
 		}
 		return c;
 	}

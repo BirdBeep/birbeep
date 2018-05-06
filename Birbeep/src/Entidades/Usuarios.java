@@ -3,7 +3,6 @@ import java.sql.Date;
 
 public class Usuarios {
 	private String id;
-	private String username;
 	private String password;
 	private String nombre;
 	private String apellidos;
@@ -40,12 +39,6 @@ public class Usuarios {
 	}
 	public void setId(String id) {
 		this.id = id;
-	}
-	public String getUsername() {
-		return username;
-	}
-	public void setUsername(String nombre) {
-		this.username = nombre;
 	}
 	public String getPassword() {
 		return password;

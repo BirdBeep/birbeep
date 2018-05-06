@@ -21,29 +21,32 @@ public class UsuarioDAO {
 	 * @return Usuario
 	 * @throws SQLException
 	 */
-	public Usuarios recuperarUsuario(Usuarios usu) throws SQLException{
+	public Usuarios recuperarUsuario(Usuarios usu) {
 		PreparedStatement orden=null;
 		ResultSet datos=null;
 		Usuarios usuario=new Usuarios();
-		//try {
+		try {
 			orden =con.prepareStatement(DbQuery.getUser());
 			orden.setString(1, usu.getId());
 			datos=orden.executeQuery();
 			if (datos.next()){
 				usuario.setId(datos.getString(1));
-				usuario.setUsername(datos.getString(2));
-				usuario.setPassword(datos.getString(3));
-				usuario.setNombre(datos.getString(4));
-				usuario.setApellidos(datos.getString(5));
-				usuario.setEmail(datos.getString(6));
-				usuario.setUltimaConexion(datos.getDate(7));
+				usuario.setPassword(datos.getString(2));
+				usuario.setNombre(datos.getString(3));
+				usuario.setApellidos(datos.getString(4));
+				usuario.setEmail(datos.getString(5));
+				usuario.setUltimaConexion(datos.getDate(6));
 			}
-		//} catch (SQLException e) {
-			//e.getMessage();
-		//} finally{
-			orden.close();
-			datos.close();
-		//}
+		} catch (SQLException e) {
+			e.getMessage();
+		} finally{
+			try {
+				orden.close();
+				datos.close();
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			}
+		}
 		return usuario;
 	}
 }

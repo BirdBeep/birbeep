@@ -20,32 +20,53 @@ public class ConexionDAO {
 		this.con = con;
 	}
 	
-	public void altaConexion(String ip,String user)throws SQLException {
+	public void altaConexion(Conexiones conexion) {
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.YEAR, Calendar.MONTH, Calendar.DATE, Calendar.HOUR_OF_DAY, Calendar.MINUTE);
 		java.sql.Date now = new java.sql.Date(cal.getTimeInMillis());
 	    PreparedStatement orden=null;
-		orden =con.prepareStatement(DbQuery.insertConexion());
-		orden.setString(1, ip);
-		orden.setString(2, user);
-		orden.setDate(3, now);
-		orden.executeUpdate();
+		try {
+			orden =con.prepareStatement(DbQuery.insertConexion());
+			orden.setString(1, conexion.getIp());
+			orden.setString(2, conexion.getUser());
+			orden.setDate(3, now);
+			orden.executeUpdate();
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		} finally{
+			try {
+				orden.close();
+				//datos.close();
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			}
+		}
 	}
 
-	public Conexiones obtenerUltimaCon(String id)throws SQLException{//Comprobar los campos
+	public Conexiones obtenerUltimaCon(String id) {//Comprobar los campos
 		PreparedStatement orden=null;
 		ResultSet datos=null;
 		Conexiones conexion = new Conexiones();
-		//try {
-			orden =con.prepareStatement(DbQuery.getLastCon());
-			orden.setString(1, id);
-			datos=orden.executeQuery();
-			if (datos.next()){
-				conexion.setIdConexion(datos.getString(1));
-				conexion.setIp(datos.getString(2));
-				conexion.setUltimaActualizacion(datos.getDate(3));
-				conexion.setUser(datos.getString(4));
+			try {
+				orden =con.prepareStatement(DbQuery.getLastCon());
+				orden.setString(1, id);
+				datos=orden.executeQuery();
+				if (datos.next()){
+					conexion.setIdConexion(datos.getString(1));
+					conexion.setIp(datos.getString(2));
+					conexion.setUltimaActualizacion(datos.getDate(3));
+					conexion.setUser(datos.getString(4));
+				}
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			} finally{
+				try {
+					orden.close();
+					datos.close();
+				} catch (SQLException e) {
+					System.out.println(e.getMessage());
+				}
 			}
-			return conexion;
+		return conexion;
 	}
 }

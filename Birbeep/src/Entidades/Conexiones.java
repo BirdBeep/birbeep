@@ -5,8 +5,8 @@ import java.sql.Date;
 public class Conexiones {
 	private String idConexion;
 	private String ip;
-	private Date ultimaActualizacion;
 	private String user;
+	private Date ultimaActualizacion;
 	
 	public String getIdConexion() {
 		return idConexion;
