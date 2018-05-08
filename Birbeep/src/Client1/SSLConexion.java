@@ -41,9 +41,10 @@ public class SSLConexion {
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
-		PeticionMSG p = new PeticionMSG(2,new Mensaje("client1","client3",mnsg,"conv01"));
+		PeticionMSG p = new PeticionMSG(2,new Mensaje("client1","client3",mnsg,"conv01"));//antes Peticion p=new PeticionMSG(
 		sender.setPeticion(p);
 		sender.interrupt();//sender.notify()
+		
 	}
 
 	public static void initSSLConexion() {

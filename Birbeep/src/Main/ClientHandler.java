@@ -31,6 +31,7 @@ import DAO.ParticipantesDAO;
 import DAO.ConexionDAO;
 import DAO.ConversacionDAO;
 import DAO.UsuarioDAO;
+import Entidades.Certificado;
 import Entidades.ConexionMySQL;
 import Entidades.Conexiones;
 import Entidades.Conversaciones;
@@ -91,7 +92,7 @@ class ClientHandler extends Thread {
 		}
 	}
 	public void run() {
-		PeticionMSG p=null;//antes Peticion p=null, pero no se puede deserializar porque esta clase no tiene el atributo mensaje
+		PeticionMSG p=null;
 		try {
 			p = new JSONDeserializer<PeticionMSG>().deserialize(input.readObject().toString(),PeticionMSG.class);
 		} catch (ClassNotFoundException e) {
@@ -101,18 +102,32 @@ class ClientHandler extends Thread {
 		}
 		int tipo=p.getTipo();
 		switch (tipo) {
-		case 1:
+		case 1:// PARA LOS CONTACTOS??
 			try {
 				actualizar(p);
 			} catch (Exception e) { //Trata la SQLException y las relativas a la obtención de clave
 				System.out.println(e.getMessage());
 			}
 			break;
-		case 2:
-			//PeticionMSG peticion = (PeticionMSG) p;
+		case 2:// Está enviando un mensaje a otro usuario
 			recibirMensaje(p);
 			break;
-
+		case 3:// Está solicitando el certificado
+			try {
+				Certificate c=recuperarClave("client3");//NECESITA EL CAMPO "RECEPTOR" EN LA PETICION
+				Certificado ctoString = new Certificado(c);
+				try {
+					JSONSerializer serializer = new JSONSerializer(); 
+					String cs=serializer.exclude("*.class").serialize( ctoString );
+					output.writeObject(cs);
+					output.flush();
+					//output.close();
+				} catch (IOException e) {
+					System.out.println(e.getMessage());
+				}
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
 		default:
 			break;
 		}
@@ -132,18 +147,17 @@ class ClientHandler extends Thread {
 		conver.setIdConversacion(peticion.getMensaje().getConver());
 		List<Mensajes> mensajes=new ArrayList<Mensajes>();
 		mensajes=serv2.recuperarMensajes(cli,conver);
-		String clavePub=recuperarClave(peticion.getMensaje().getReceptor());//NECESITA EL CAMPO "RECEPTOR" EN LA PETICION
-		//mensajes.add(clavePub); LA IDEA ES INCLUIR COMO ULTIMO "MENSAJE" LA CLAVE PÚBLICA, PERO ENTONCES HAY QUE MANDAR SOLO EL TEXTO DE LOS MENSAJES
 		JSONSerializer serializer = new JSONSerializer(); 
 		String ms=serializer.serialize( mensajes );
 		output.writeObject(ms);
-		output.flush();
-		output.close();
+		//output.flush();
+		//output.close();
 	}
 	/**
 	 * El tipo de petición ha sido "mensaje", creamos una conversación + una conexión, se comprueba si la conversación ya existe:
 	 * Dos posibles escenarios -> No existe (gestionConversacion()) o Ya existe (gestionConversacion2())
-	 * Finalmente se envia un aviso al destinatario.
+	 * Se envia un aviso al destinatario.
+	 * Se envia una respuesta "OK" al usuario que escribió
 	 * @param peticion con los parámetros necesarios (Emisor, receptor, conversación, mensaje)
 	 */
 	private void recibirMensaje(PeticionMSG peticion) {
@@ -166,6 +180,15 @@ class ClientHandler extends Thread {
 			gestionConversacion2(conversacion,usu_emisor,usu_recep,m.getTexto());
 		}
 		sendToken(usu_recep);
+		try {
+			JSONSerializer serializer = new JSONSerializer(); 
+			String ms=serializer.exclude("*.class").serialize( m );
+			output.writeObject(ms);
+			//output.flush();
+			//output.close();
+		} catch (IOException e) {
+			System.out.println(e.getMessage());
+		}
 	}
 	/**
 	 * Es la primera vez que intercambian información emisor y receptor
@@ -215,33 +238,30 @@ class ClientHandler extends Thread {
 	 * @return clave con la clave publica del correspondiente usuario
 	 * @throws Exception capturada en "run()"
 	 */
-	private String recuperarClave(String propietario) throws Exception{
-		Key clave=null;
+	private Certificate recuperarClave(String propietario) throws Exception{
+		Certificate cert=null;
 		if(propietario.equals("client1")){
 			ks = KeyStore.getInstance("JKS");
 			ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");
 			ksbufin = new BufferedInputStream(ksfis);
 			ks.load(ksbufin, "123456".toCharArray());
-			Certificate cert =  ks.getCertificate("sebasKey");
-			clave = (PublicKey) cert.getPublicKey();
+			cert =  ks.getCertificate("sebasKey");
 		}
 		if(propietario.equals("client2")){
 			ks = KeyStore.getInstance("JKS");
 			ksfis = new FileInputStream("src/Main/certs/client2/luismiKey.jks");
 			ksbufin = new BufferedInputStream(ksfis);
 			ks.load(ksbufin, "567890".toCharArray());
-			Certificate cert =  ks.getCertificate("luismiKey");
-			clave = (PublicKey) cert.getPublicKey();
+			cert =  ks.getCertificate("luismiKey");
 		}
 		if(propietario.equals("client3")){
 			ks = KeyStore.getInstance("JKS");
 			ksfis = new FileInputStream("src/Main/certs/client3/rubenKey.jks");
 			ksbufin = new BufferedInputStream(ksfis);
 			ks.load(ksbufin, "aaaaaa".toCharArray());
-			Certificate cert =  ks.getCertificate("rubenKey");
-			clave = (PublicKey) cert.getPublicKey();
+			cert =  ks.getCertificate("rubenKey");
 		}
-		return clave.toString();//COMPROBAR QUE ES LA CLAVE HECHA CADENA, NO LA DIRECCIÓN DE MEMORIA DE LA INSTANCIA
+		return cert;
 	}
 	/**
 	 * Envia un token UDP al receptor correspondiente (receptor) para avisar de que hay nuevos mensajes o de que se actualice, depende de "Peticion"
