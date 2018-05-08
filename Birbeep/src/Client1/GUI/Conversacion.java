@@ -56,6 +56,7 @@ public class Conversacion extends javax.swing.JFrame {
         txtUsuario = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Conversacion");
 
         textoEnvio.setColumns(20);
         textoEnvio.setRows(5);

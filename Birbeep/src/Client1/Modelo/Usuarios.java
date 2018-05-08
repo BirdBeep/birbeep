@@ -1,7 +1,8 @@
-package Entidades;
+package Client1.Modelo;
 import java.sql.Date;
 
 public class Usuarios {
+
 	private String id;
 	private String password;
 	private String nombre;
@@ -49,3 +50,4 @@ public class Usuarios {
 	}
 	
 }
+

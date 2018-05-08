@@ -1,23 +1,23 @@
-package Entidades;
+package Client3.Modelo;
 
 public class PeticionMSG extends Peticion{
 	
-	private Mensajes mensaje;
+	private Mensaje mensaje;
 	
 	public PeticionMSG(){
-		super(5);
+		super();
 	};
 	
-	public PeticionMSG(int tipo, Mensajes mensaje) {
+	public PeticionMSG(int tipo, Mensaje mensaje) {
 		super(tipo);
 		this.mensaje=mensaje;
 	}
 
-	public Mensajes getMensaje() {
+	public Mensaje getMensaje() {
 		return mensaje;
 	}
 
-	public void setMensaje(Mensajes mensaje) {
+	public void setMensaje(Mensaje mensaje) {
 		this.mensaje = mensaje;
 	}
 

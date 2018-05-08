@@ -5,20 +5,53 @@
  */
 package Client3.GUI;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.util.ArrayList;
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
 
 /**
  *
- * @author SE65753
+ * @author Luismi
  */
-public class Chat extends javax.swing.JFrame {
-
+public class Chat extends javax.swing.JFrame { 
     /**
      * Creates new form Chat
      */
     public Chat() {
         initComponents();
-    }
+        //this.setDefaultCloseOperation();
+        addWindowListener(new java.awt.event.WindowAdapter(){
+
+        public void windowOpened(java.awt.event.WindowEvent evt){
+            JOptionPane.showMessageDialog(null, "Bienvenido a BirdBeep");
+            cargarLista();
+            //Color JFrame
+            //Color fondo = new Color( hex("FF7373") );
+            getContentPane().setBackground(Color.LIGHT_GRAY);
+            //Color JPanel
+            ///Color info=new Color(hex("FFAEAE"));
+            PanelInfo.setBackground(Color.DARK_GRAY);
+           //Color fondo Lista
+            //Color lista=new Color(hex("FFAEAE"));
+            RecientesList.setBackground(Color.DARK_GRAY);
+            Color fuente =new Color(hex("000000"));
+            txtChats.setForeground(fuente);
+            txtInformacion.setForeground(fuente);
+            txtNombre.setForeground(fuente);
+            RecientesList.setForeground(fuente);
+            Usuario.setForeground(fuente);
+        }
+
+        public void windowClosing(java.awt.event.WindowEvent evt){
+        }
+
+        public void windowActivated(java.awt.event.WindowEvent evt){
+            
+        }
+    });
+                 }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -31,18 +64,15 @@ public class Chat extends javax.swing.JFrame {
 
         jFrame1 = new javax.swing.JFrame();
         jFrame2 = new javax.swing.JFrame();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        txtUsuario = new javax.swing.JLabel();
+        PanelInfo = new javax.swing.JPanel();
+        txtInformacion = new javax.swing.JLabel();
+        Usuario = new javax.swing.JLabel();
+        txtNombre = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         RecientesList = new javax.swing.JList();
-        jLabel2 = new javax.swing.JLabel();
+        txtChats = new javax.swing.JLabel();
         btnConversacion = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
-        jMenuBar1 = new javax.swing.JMenuBar();
-        jMenu1 = new javax.swing.JMenu();
-        jMenuItem1 = new javax.swing.JMenuItem();
-        jMenuItem2 = new javax.swing.JMenuItem();
 
         javax.swing.GroupLayout jFrame1Layout = new javax.swing.GroupLayout(jFrame1.getContentPane());
         jFrame1.getContentPane().setLayout(jFrame1Layout);
@@ -66,47 +96,53 @@ public class Chat extends javax.swing.JFrame {
             .addGap(0, 300, Short.MAX_VALUE)
         );
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("BirdBeep");
-        setBackground(new java.awt.Color(255, 0, 204));
-
-        jPanel1.setBackground(new java.awt.Color(153, 153, 255));
-
-        jLabel1.setText("Informacion Usuario");
-
-        txtUsuario.setText("jLabel2");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(37, 37, 37)
-                .addComponent(txtUsuario)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel1)
-                .addContainerGap(162, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(24, 24, 24)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtUsuario)
-                    .addComponent(jLabel1))
-                .addContainerGap(103, Short.MAX_VALUE))
-        );
-
-        RecientesList.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };//Debe recibir del server la lista
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        setTitle("BirBeep");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
         });
+
+        txtInformacion.setText("Informacion Usuario");
+
+        Usuario.setText("jLabel2");
+
+        txtNombre.setText("Usuario");
+
+        javax.swing.GroupLayout PanelInfoLayout = new javax.swing.GroupLayout(PanelInfo);
+        PanelInfo.setLayout(PanelInfoLayout);
+        PanelInfoLayout.setHorizontalGroup(
+            PanelInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanelInfoLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(txtNombre)
+                .addGroup(PanelInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(PanelInfoLayout.createSequentialGroup()
+                        .addGap(30, 30, 30)
+                        .addComponent(txtInformacion))
+                    .addGroup(PanelInfoLayout.createSequentialGroup()
+                        .addGap(56, 56, 56)
+                        .addComponent(Usuario)))
+                .addContainerGap(177, Short.MAX_VALUE))
+        );
+        PanelInfoLayout.setVerticalGroup(
+            PanelInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanelInfoLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(txtInformacion)
+                .addGap(43, 43, 43)
+                .addGroup(PanelInfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(Usuario)
+                    .addComponent(txtNombre))
+                .addContainerGap(59, Short.MAX_VALUE))
+        );
+
         jScrollPane1.setViewportView(RecientesList);
 
-        jLabel2.setText("Chat Recientes");
+        txtChats.setText("Chat Recientes");
 
-        btnConversacion.setText("Conversacion Reciente");
+        btnConversacion.setText("Iniciar conversacion");
         btnConversacion.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnConversacionActionPerformed(evt);
@@ -120,85 +156,100 @@ public class Chat extends javax.swing.JFrame {
             }
         });
 
-        jMenu1.setText("File");
-
-        jMenuItem1.setText("Abrir hijo 1");
-        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem1ActionPerformed(evt);
-            }
-        });
-        jMenu1.add(jMenuItem1);
-
-        jMenuItem2.setText("Abrir hijo 2");
-        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem2ActionPerformed(evt);
-            }
-        });
-        jMenu1.add(jMenuItem2);
-
-        jMenuBar1.add(jMenu1);
-
-        setJMenuBar(jMenuBar1);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(PanelInfo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2)
+                    .addComponent(txtChats)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(btnConversacion, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addGap(349, 689, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(PanelInfo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2)
+                .addComponent(txtChats)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 470, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(38, 38, 38)
                         .addComponent(btnConversacion)
-                        .addGap(35, 35, 35)
+                        .addGap(104, 104, 104)
                         .addComponent(jButton1)))
-                .addContainerGap(94, Short.MAX_VALUE))
+                .addContainerGap(41, Short.MAX_VALUE))
         );
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        cargarchat();
-    }//GEN-LAST:event_jMenuItem1ActionPerformed
-
-    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
-
-    }//GEN-LAST:event_jMenuItem2ActionPerformed
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        NuevaConversacion();
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     private void btnConversacionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConversacionActionPerformed
         cargarchat();
     }//GEN-LAST:event_btnConversacionActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-       NuevaConversacion();
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        cerrar();
+    }//GEN-LAST:event_formWindowClosing
 
+    public void cerrar(){
+    Object [] opciones ={"Aceptar","Cancelar"};
+    int eleccion = JOptionPane.showOptionDialog(rootPane,"¿Desea salir de Birdbeep?","Birdbeep",
+    JOptionPane.YES_NO_OPTION,
+    JOptionPane.QUESTION_MESSAGE,null,opciones,"Aceptar");
+    if (eleccion == JOptionPane.YES_OPTION){
+        System.exit(0);
+    }else{}
+    }
+    
+    private int hex( String color_hex )
+    {
+        return Integer.parseInt(color_hex,  16 );
+    }
+    
+    
+    public void cargarLista(){      
+        ArrayList<String>elementos=new ArrayList<>();
+        elementos.add("Jose");
+        elementos.add("Juan");
+        elementos.add("Alvaro");
+        elementos.add("Sebastian");
+        elementos.add("Ruben");
+        elementos.add("Pedro");
+        DefaultListModel modelo = new DefaultListModel();
+        
+        for (String elemento : elementos) {
+            modelo.addElement(elemento);
+        }
+
+        RecientesList.setModel(modelo);
+    }
+    
     public void cargarchat(){
-        String contacto=(String) RecientesList.getSelectedValue();
-        Conversacion h1 = new Conversacion();
-        h1.setVisible(true);
+       String contacto=(String) RecientesList.getSelectedValue();
+        if (contacto==null){
+            JOptionPane.showMessageDialog(null, "Marca un contacto o inicia una nueva conversación");
+        }else{ 
+            Conversacion h1 = new Conversacion();
+            h1.setVisible(true);
+            h1.txtUsuario.setText(contacto);
+        }
+       
     }
     
     public void NuevaConversacion(){
@@ -228,30 +279,28 @@ public class Chat extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(Chat.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Chat().setVisible(true);                
+                new Chat().setVisible(true);               
             }
         });
 
     }
-   
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel PanelInfo;
     private javax.swing.JList RecientesList;
+    public static javax.swing.JLabel Usuario;
     private javax.swing.JButton btnConversacion;
     private javax.swing.JButton jButton1;
     private javax.swing.JFrame jFrame1;
     private javax.swing.JFrame jFrame2;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JMenuItem jMenuItem2;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel txtUsuario;
+    private javax.swing.JLabel txtChats;
+    private javax.swing.JLabel txtInformacion;
+    private javax.swing.JLabel txtNombre;
     // End of variables declaration//GEN-END:variables
 
 }

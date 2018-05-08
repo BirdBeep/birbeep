@@ -1,59 +1,116 @@
 package Client1;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLSocket;
 
-import Client1.Modelo.Mensaje;
+import com.google.gson.Gson;
+
+import Client1.Modelo.Certificado;
+import Client1.Modelo.Conversaciones;
+import Client1.Modelo.Mensajes;
 import Client1.Modelo.Peticion;
 import Client1.Modelo.PeticionMSG;
+import Client1.Modelo.PeticionUPDATEUser;
+import Client1.Modelo.Usuarios;
+import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
+import flexjson.transformer.IterableTransformer;
 
 public class Sender extends Thread {
 	private SSLSocket socket;
 	private Peticion peticion;
-	
-	public static void main(String [] args){
-		SSLConexion.initSSLConexion();
-		PeticionMSG p = new PeticionMSG(2,new Mensaje("client1","client3","Probando...","conv01"));
-		Sender s= new Sender();
-		s.start();
-		s.setPeticion(p);
-		s.interrupt();
-	}
-
+	private List<Usuarios> usuarios;
+	private List<Mensajes> mensajes;
 	public void run() {
 		socket = SSLConexion.getSocket();
-		if(socket==(null))
-			System.out.println("Mal");
-		do {
-			try {
-				Sender.sleep(9999999);
-			} catch (InterruptedException ie) {
-				ObjectOutputStream oos=null;
-				ObjectInputStream ois=null;
+		if(socket!=null){
+			do {
 				try {
-					oos = new ObjectOutputStream(socket.getOutputStream());
-					//ois = new ObjectInputStream(socket.getInputStream()); //SE QUEDA AQUÍ YA QUE NO VIENE NADA POR EL SOCKET
-					try{
-						ois.readObject();
-						peticion=(Peticion) ois.readObject();
-						ois.close();
-					}catch(NullPointerException e){
+					TimeUnit.DAYS.sleep(30);
+				} catch (InterruptedException ie) {
+					ObjectOutputStream oos=null;
+					ObjectInputStream ois=null;
+					try {
+						oos = new ObjectOutputStream(socket.getOutputStream());
 						JSONSerializer serializer = new JSONSerializer(); 
-						String ms=serializer.exclude("*.class").serialize( peticion );
+						String ms=serializer.exclude("*.class").serialize(peticion);
 						oos.writeObject(ms);
 						oos.flush();
-						oos.close();
+						ois = new ObjectInputStream(socket.getInputStream());
+						int tipo=peticion.getTipo();
+						switch (tipo) {
+						case 1://Solicitud de LOGIN
+							Usuarios user= new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
+							SSLConexion.setUser(user);
+							break;
+						case 2://Actualizar USUARIOS
+							do{
+								Usuarios usuario= new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
+								usuarios.add(usuario);
+							}while(ois.readObject()!=null);
+							break;
+						case 3://Conversaciones
+							Conversaciones conver=null;
+							List<Conversaciones> convs=new ArrayList<Conversaciones>();
+							try{
+								do{
+									conver= new JSONDeserializer<Conversaciones>().deserialize(ois.readObject().toString(),Conversaciones.class);
+									convs.add(conver);
+								}while(ois.readObject()!=null);
+							}catch(EOFException e){
+								System.out.println(convs.get(0).getIdConversacion());
+							}
+							break;
+						case 4://Actualizar mensajes
+							Mensajes mensaje=null;
+							List<Mensajes> mnsjs=new ArrayList<Mensajes>();
+							try{
+								do{
+									mensaje= new JSONDeserializer<Mensajes>().deserialize(ois.readObject().toString(),Mensajes.class);
+									mnsjs.add(mensaje);
+								}while(ois.readObject()!=null);
+							}catch(EOFException e){
+								System.out.println(Security.descrifrar(mnsjs.get(mnsjs.size()-1).getTexto()));
+							}
+							break;
+						case 5://Enviar mensaje
+							//Mensajes mensaje = new JSONDeserializer<Mensajes>().deserialize(ois.readObject().toString(),Mensajes.class);
+							//System.out.println(Security.descrifrar(mensaje.getTexto()));
+							break;
+						case 6://Certificado
+							PublicKey cert= new JSONDeserializer<PublicKey>().deserialize(ois.readObject().toString(),PublicKey.class);//Probar con Key en lugar de Certificate
+							//SSLConexion.setCert(cert);
+							System.out.println(cert.toString());
+							break;
+						case 7://LOGOUT
+							break;
+						default:
+							break;
+						}
+						oos.close();	
+						ois.close();
+					} catch (IOException | ClassNotFoundException ioe) {
+						ioe.printStackTrace();
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-				} catch (IOException | ClassNotFoundException ioe) {
-					ioe.printStackTrace();
+	
 				}
-
-			}
-		} while (true);
+			} while (true);
+		}
 	}
 
 	public Peticion getPeticion() {

@@ -5,6 +5,12 @@
  */
 package Client3.GUI;
 
+import java.awt.Color;
+import java.util.ArrayList;
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
+import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
+
 /**
  *
  * @author Luismi
@@ -16,6 +22,25 @@ public class NuevaConversacion extends javax.swing.JFrame {
      */
     public NuevaConversacion() {
         initComponents();
+        this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+         addWindowListener(new java.awt.event.WindowAdapter(){
+            public void windowOpened(java.awt.event.WindowEvent evt){
+                cargarLista();
+                //Fondo del JFrame
+                //Color fondo = new Color( hex("FF7373") );
+                getContentPane().setBackground(Color.LIGHT_GRAY);
+                //Fondo de la lista
+                //Color lista = new Color( hex("FFAEAE") );
+                ContactosList.setBackground(Color.DARK_GRAY);
+            }
+
+            public void windowClosing(java.awt.event.WindowEvent evt){
+            }
+
+            public void windowActivated(java.awt.event.WindowEvent evt){
+            
+            }
+    });
     }
 
     /**
@@ -32,12 +57,8 @@ public class NuevaConversacion extends javax.swing.JFrame {
         btnIniciar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Birbeep: Nueva Conversacion");
 
-        ContactosList.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };//Los recibe del server
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
         jScrollPane1.setViewportView(ContactosList);
 
         btnIniciar.setText("Iniciar conversación");
@@ -75,11 +96,39 @@ public class NuevaConversacion extends javax.swing.JFrame {
        nueva_Conversacion();
     }//GEN-LAST:event_btnIniciarActionPerformed
 
-    
+     public void cargarLista(){      
+        ArrayList<String>elementos=new ArrayList<>();
+        elementos.add("Jose");
+        elementos.add("Juan");
+        elementos.add("Alvaro");
+        elementos.add("Sebastian");
+        elementos.add("Ruben");
+        elementos.add("Pedro");
+        DefaultListModel modelo = new DefaultListModel();
+        
+        for (String elemento : elementos) {
+            modelo.addElement(elemento);
+        }
+
+        ContactosList.setModel(modelo);
+    }
+     
+        private int hex( String color_hex )
+    {
+        return Integer.parseInt(color_hex,  16 );
+    }
+        
     public void nueva_Conversacion(){
         String contacto=(String) ContactosList.getSelectedValue();
-        Conversacion h1 = new Conversacion();
-        h1.setVisible(true);
+         if (contacto==null){
+            JOptionPane.showMessageDialog(null, "Marca un contacto o inicia una nueva conversación");
+        }else{ 
+            Conversacion h1 = new Conversacion();
+            h1.setVisible(true);
+            h1.txtUsuario.setText(contacto);
+            this.setVisible(false);
+        }
+        
     }
     /**
      * @param args the command line arguments

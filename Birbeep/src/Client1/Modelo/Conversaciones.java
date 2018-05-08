@@ -1,5 +1,4 @@
-package Entidades;
-import java.sql.Date;
+package Client1.Modelo;
 
 public class Conversaciones {
 	private String idConversacion;

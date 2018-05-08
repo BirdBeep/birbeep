@@ -54,8 +54,8 @@ public class ConexionDAO {
 				if (datos.next()){
 					conexion.setIdConexion(datos.getString(1));
 					conexion.setIp(datos.getString(2));
-					conexion.setUltimaActualizacion(datos.getDate(3));
 					conexion.setUser(datos.getString(4));
+					conexion.setUltimaActualizacion(datos.getDate(3));
 				}
 			} catch (SQLException e) {
 				System.out.println(e.getMessage());

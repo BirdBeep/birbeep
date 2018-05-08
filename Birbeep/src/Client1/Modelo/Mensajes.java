@@ -1,4 +1,4 @@
-package Entidades;
+package Client1.Modelo;
 
 public class Mensajes {
 	private String id;
@@ -9,6 +9,15 @@ public class Mensajes {
 	
 	public Mensajes(){};
 	
+	public Mensajes(String emisor, String receptor, String texto, String conver) {
+		super();
+		//this.id = id;
+		this.emisor = emisor;
+		this.receptor = receptor;
+		this.texto = texto;
+		this.conver = conver;
+	}
+
 	public String getConver() {
 		return conver;
 	}
@@ -40,3 +49,4 @@ public class Mensajes {
 		this.texto = texto;
 	}
 }
+

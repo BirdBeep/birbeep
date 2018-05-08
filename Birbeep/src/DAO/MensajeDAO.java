@@ -37,14 +37,13 @@ public class MensajeDAO {
 			}
 		}
 	}
-	public List<Mensajes> recuperarMensajes(Usuarios cli, Conversaciones conver) {
+	public List<Mensajes> recuperarMensajes(Usuarios user) {
 		List<Mensajes> mnsgs=new ArrayList<Mensajes>();
 		PreparedStatement orden=null;
 		ResultSet datos=null;
 		try{
 			orden=con.prepareStatement(DbQuery.getMensajes());
-			orden.setString(1, cli.getId());
-			orden.setString(2, conver.getIdConversacion());
+			orden.setString(1, user.getId());
 			datos=orden.executeQuery();
 			while (datos.next()){
 				Mensajes m = new Mensajes();

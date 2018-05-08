@@ -2,22 +2,22 @@ package Client1.Modelo;
 
 public class PeticionMSG extends Peticion{
 	
-	private Mensaje mensaje;
+	private Mensajes mensaje;
 	
 	public PeticionMSG(){
-		super();
+		super(5);
 	};
 	
-	public PeticionMSG(int tipo, Mensaje mensaje) {
+	public PeticionMSG(int tipo, Mensajes mensaje) {
 		super(tipo);
 		this.mensaje=mensaje;
 	}
 
-	public Mensaje getMensaje() {
+	public Mensajes getMensaje() {
 		return mensaje;
 	}
 
-	public void setMensaje(Mensaje mensaje) {
+	public void setMensaje(Mensajes mensaje) {
 		this.mensaje = mensaje;
 	}
 

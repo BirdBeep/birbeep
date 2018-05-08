@@ -16,6 +16,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,8 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
+
+import com.google.gson.Gson;
 
 import DAO.MensajeDAO;
 import DAO.ParticipantesDAO;
@@ -37,10 +40,17 @@ import Entidades.Conversaciones;
 import Entidades.Mensajes;
 import Entidades.Participantes;
 import Entidades.Peticion;
+import Entidades.PeticionCERT;
+import Entidades.PeticionLOGIN;
 import Entidades.PeticionMSG;
+import Entidades.PeticionUPDATEConv;
+import Entidades.PeticionUPDATEMsg;
+import Entidades.PeticionUPDATEUser;
 import Entidades.Usuarios;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
+import flexjson.transformer.IterableTransformer;
+
 /**
  * 
  * @author Birdbeep
@@ -91,62 +101,159 @@ class ClientHandler extends Thread {
 		}
 	}
 	public void run() {
-		PeticionMSG p=null;//antes Peticion p=null, pero no se puede deserializar porque esta clase no tiene el atributo mensaje
+		Peticion peticion=null;
+		Object obj =null;
 		try {
-			p = new JSONDeserializer<PeticionMSG>().deserialize(input.readObject().toString(),PeticionMSG.class);
+			obj=input.readObject();
+			peticion = new JSONDeserializer<Peticion>().deserialize(obj.toString(),Peticion.class);
 		} catch (ClassNotFoundException e) {
 			System.out.println(e.getMessage());
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
 		}
-		int tipo=p.getTipo();
+		int tipo=peticion.getTipo();
 		switch (tipo) {
 		case 1:
+			PeticionLOGIN peticiononLOGIN = (PeticionLOGIN) new JSONDeserializer<PeticionLOGIN>().deserialize(obj.toString(),PeticionLOGIN.class);
 			try {
-				actualizar(p);
-			} catch (Exception e) { //Trata la SQLException y las relativas a la obtención de clave
+				login(peticiononLOGIN);
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+			}
+		case 2:
+			PeticionUPDATEUser peticionUPDATE= (PeticionUPDATEUser) new JSONDeserializer<PeticionUPDATEUser>().deserialize(obj.toString(),PeticionUPDATEUser.class);
+			try {
+				actualizarUsers(peticionUPDATE);
+			} catch (Exception e) { //Trata la SQLException y las relativas a la obtencion de clave
 				System.out.println(e.getMessage());
 			}
 			break;
-		case 2:
-			//PeticionMSG peticion = (PeticionMSG) p;
-			recibirMensaje(p);
+		case 3:
+			PeticionUPDATEConv peticionUPDATEconv=(PeticionUPDATEConv) new JSONDeserializer<PeticionUPDATEConv>().deserialize(obj.toString(),PeticionUPDATEConv.class);
+			try {
+				actualizarConversaciones(peticionUPDATEconv);
+			} catch (IOException e2) {
+				System.out.println(e2.getMessage());
+			}
 			break;
-
+		case 4:
+			PeticionUPDATEMsg peticionUPDMSG=(PeticionUPDATEMsg)new JSONDeserializer<PeticionUPDATEMsg>().deserialize(obj.toString(),PeticionUPDATEMsg.class);
+			try {
+				actualizarMensajesConv(peticionUPDMSG);
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+			}
+			break;
+		case 5:
+			PeticionMSG peticionMSG= (PeticionMSG) new JSONDeserializer<PeticionMSG>().deserialize(obj.toString(),PeticionMSG.class);
+			try {
+				recibirMensaje(peticionMSG);
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+			}
+			break;
+		case 6:
+			PeticionCERT peticionCERT= (PeticionCERT) new JSONDeserializer<PeticionCERT>().deserialize(obj.toString(),PeticionCERT.class);
+			try {
+				devolverCert(peticionCERT);
+			} catch (Exception e1) {
+				System.out.println(e1.getMessage());
+			}
+			break;
 		default:
 			break;
 		}
 	}
 	/**
-	 * El tipo de petición ha sido "actualización", recuperamos la info de quién es quien ha solicitado esta petición y
-	 * de que conversación se trata, recuperamos una lista de mensajes de la bbdd y los enviamos a por el socket
-	 * @param peticion con los parámetros necesarios (Emisor, conversación)
-	 * @throws Exception capturada en el "run()" para SQLException y para la obtención de clave pública
+	 * 
+	 * @param peticion
+	 * @throws IOException
+	 */
+	private void login (PeticionLOGIN peticion) throws IOException {
+		Usuarios usuario = peticion.getUsuario();
+		Usuarios user=serv1.recuperarUsuario(usuario.getEmail());	
+		Conexiones conexion=new Conexiones();
+		conexion.setIp(ip);
+		conexion.setUser(user.getId());
+		serv3.altaConexion(conexion);
+		if(usuario.getPassword().compareTo(user.getPassword())==0){
+			JSONSerializer serializer = new JSONSerializer(); 
+			String ms=serializer.serialize(user);
+			output.writeObject(ms);
+			output.flush();
+			output.close();
+		}else{
+			JSONSerializer serializer = new JSONSerializer(); 
+			String ms=serializer.serialize(null);
+			output.writeObject(ms);
+			output.flush();
+			output.close();
+		}
+	}
+	/**
+	 * El tipo de petición ha sido "actualización", recuperamos la info de todos los usuarios dados de alta en la app
+	 * @param peticion 
+	 * @throws Exception capturada en el "run()" para SQLException
 	 * 
 	 */
-	private void actualizar(PeticionMSG peticion) throws Exception { //PUEDE SER QUE CONVERSACION SEA NULL CUANDO SE ENTABLA POR VEZ PRIMERA???
-		Usuarios u = new Usuarios();
-		u.setId(peticion.getMensaje().getEmisor());//HABRÁ QUE CREAR UNA "PETICION" QUE TENGA EL CAMPO "USUARIO" PARA EL "TIPO 1"
-		Usuarios cli = serv1.recuperarUsuario(u);
-		Conversaciones conver=new Conversaciones();
-		conver.setIdConversacion(peticion.getMensaje().getConver());
-		List<Mensajes> mensajes=new ArrayList<Mensajes>();
-		mensajes=serv2.recuperarMensajes(cli,conver);
-		String clavePub=recuperarClave(peticion.getMensaje().getReceptor());//NECESITA EL CAMPO "RECEPTOR" EN LA PETICION
-		//mensajes.add(clavePub); LA IDEA ES INCLUIR COMO ULTIMO "MENSAJE" LA CLAVE PÚBLICA, PERO ENTONCES HAY QUE MANDAR SOLO EL TEXTO DE LOS MENSAJES
-		JSONSerializer serializer = new JSONSerializer(); 
-		String ms=serializer.serialize( mensajes );
-		output.writeObject(ms);
-		output.flush();
+	private void actualizarUsers(PeticionUPDATEUser peticion) throws Exception { //PUEDE SER QUE CONVERSACION SEA NULL CUANDO SE ENTABLA POR VEZ PRIMERA???
+		List<Usuarios> contactos=serv1.recuperarTodos();
+		JSONSerializer serializer = new JSONSerializer();
+		for(Usuarios contacto:contactos){
+			String ms=serializer.exclude("*.class").serialize( contacto );
+			output.writeObject(ms);
+		}
+		//output.flush();
+		//output.close();
+	}
+	/**
+	 * Manda los objetos "Conversacion" del usuario correspondiente
+	 * @param peticionUPDATEconv con el usuario que tiene conversaciones ya entabladas
+	 * @throws IOException 
+	 */
+	private void actualizarConversaciones(PeticionUPDATEConv peticionUPDATEconv) throws IOException {
+		Usuarios u=new Usuarios();
+		u.setId(peticionUPDATEconv.getUser().getId());
+		Usuarios usr=serv1.recuperarUsuario(u);
+		List<Participantes> ptps=serv5.recuperarPorUsuario(usr);
+		List<Conversaciones> cs=new ArrayList<Conversaciones>();
+		for(Participantes p:ptps){
+			cs.add(serv4.recuperarConv(p.getIdconversacion()));
+		}
+		JSONSerializer serializer = new JSONSerializer();
+		for(Conversaciones c:cs){
+			String ms=serializer.exclude("*.class").serialize( c );
+			output.writeObject(ms);
+			output.flush();
+		}
+		output.close();
+	}
+	/**
+	 * Recuperamos los mensajes de usuario
+	 * @param peticionUPDMSG con emisor
+	 * @throws IOException 
+	 */
+	private void actualizarMensajesConv(PeticionUPDATEMsg peticionUPDMSG) throws IOException {
+		Usuarios emisor=new Usuarios();
+		emisor.setId(peticionUPDMSG.getEmisor().getId());
+		List<Mensajes> mensajes=serv2.recuperarMensajes(emisor);
+		JSONSerializer serializer = new JSONSerializer();
+		for(Mensajes mensaje:mensajes){
+			String ms=serializer.exclude("*.class").serialize( mensaje );
+			output.writeObject(ms);
+			output.flush();
+		}
 		output.close();
 	}
 	/**
 	 * El tipo de petición ha sido "mensaje", creamos una conversación + una conexión, se comprueba si la conversación ya existe:
 	 * Dos posibles escenarios -> No existe (gestionConversacion()) o Ya existe (gestionConversacion2())
-	 * Finalmente se envia un aviso al destinatario.
+	 * Se envia un aviso al destinatario.
+	 * Se envia una respuesta "OK" al usuario que escribió
 	 * @param peticion con los parámetros necesarios (Emisor, receptor, conversación, mensaje)
+	 * @throws IOException 
 	 */
-	private void recibirMensaje(PeticionMSG peticion) {
+	private void recibirMensaje(PeticionMSG peticion) throws IOException {
 		Mensajes m = peticion.getMensaje();
 		Usuarios userA = new Usuarios();
 		Usuarios userB = new Usuarios();
@@ -165,7 +272,28 @@ class ClientHandler extends Thread {
 		}else{//Existia la conver
 			gestionConversacion2(conversacion,usu_emisor,usu_recep,m.getTexto());
 		}
-		sendToken(usu_recep);
+		//sendToken(usu_recep);
+		JSONSerializer serializer = new JSONSerializer(); 
+		String ms=serializer.exclude("*.class").serialize( m );
+		output.writeObject(ms);
+	}
+	/**
+	 * A través del usuario que viene por la petición, obtiene su correspondiente certificado
+	 * A continuación lo enviamos por el flujo
+	 * @param peticionCERT
+	 * @throws Exception
+	 */
+	private void devolverCert(PeticionCERT peticionCERT) throws Exception {
+		Usuarios u=new Usuarios();
+		u.setId(peticionCERT.getId());
+		Usuarios usr=serv1.recuperarUsuario(u);
+		Certificate cert = recuperarClave(usr.getId());
+		//Key key = cert.getPublicKey(); Serializar Key en lugar de Certificate???????????
+		JSONSerializer serializer = new JSONSerializer(); 
+		String ms=serializer.exclude("*.class").serialize(cert.getPublicKey());
+		output.writeObject(ms);
+		output.flush();
+		output.close();
 	}
 	/**
 	 * Es la primera vez que intercambian información emisor y receptor
@@ -215,33 +343,30 @@ class ClientHandler extends Thread {
 	 * @return clave con la clave publica del correspondiente usuario
 	 * @throws Exception capturada en "run()"
 	 */
-	private String recuperarClave(String propietario) throws Exception{
-		Key clave=null;
+	private Certificate recuperarClave(String propietario) throws Exception{
+		Certificate cert=null;
 		if(propietario.equals("client1")){
 			ks = KeyStore.getInstance("JKS");
-			ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");
+			ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");//Tiene que estar tambien en el server para mandar la clave publica al resto de users
 			ksbufin = new BufferedInputStream(ksfis);
 			ks.load(ksbufin, "123456".toCharArray());
-			Certificate cert =  ks.getCertificate("sebasKey");
-			clave = (PublicKey) cert.getPublicKey();
+			cert = ks.getCertificate("sebasKey");
 		}
 		if(propietario.equals("client2")){
 			ks = KeyStore.getInstance("JKS");
 			ksfis = new FileInputStream("src/Main/certs/client2/luismiKey.jks");
 			ksbufin = new BufferedInputStream(ksfis);
 			ks.load(ksbufin, "567890".toCharArray());
-			Certificate cert =  ks.getCertificate("luismiKey");
-			clave = (PublicKey) cert.getPublicKey();
+			cert = ks.getCertificate("luismiKey");
 		}
 		if(propietario.equals("client3")){
 			ks = KeyStore.getInstance("JKS");
 			ksfis = new FileInputStream("src/Main/certs/client3/rubenKey.jks");
 			ksbufin = new BufferedInputStream(ksfis);
 			ks.load(ksbufin, "aaaaaa".toCharArray());
-			Certificate cert =  ks.getCertificate("rubenKey");
-			clave = (PublicKey) cert.getPublicKey();
+			cert = ks.getCertificate("rubenKey");
 		}
-		return clave.toString();//COMPROBAR QUE ES LA CLAVE HECHA CADENA, NO LA DIRECCIÓN DE MEMORIA DE LA INSTANCIA
+		return cert;
 	}
 	/**
 	 * Envia un token UDP al receptor correspondiente (receptor) para avisar de que hay nuevos mensajes o de que se actualice, depende de "Peticion"
@@ -263,6 +388,6 @@ class ClientHandler extends Thread {
 				socketUDP.close();
 			}
 		}
-
 }
+
 

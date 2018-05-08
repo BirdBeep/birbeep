@@ -15,35 +15,36 @@ import javax.swing.JOptionPane;
  *
  * @author Luismi
  */
-public class Chat extends javax.swing.JFrame {
-    
- 
-
-
+public class Chat extends javax.swing.JFrame { 
     /**
      * Creates new form Chat
      */
     public Chat() {
         initComponents();
-         addWindowListener(new java.awt.event.WindowAdapter(){
+        //this.setDefaultCloseOperation();
+        addWindowListener(new java.awt.event.WindowAdapter(){
 
         public void windowOpened(java.awt.event.WindowEvent evt){
             JOptionPane.showMessageDialog(null, "Bienvenido a BirdBeep");
             cargarLista();
             //Color JFrame
-            getContentPane().setBackground(Color.DARK_GRAY);
+            //Color fondo = new Color( hex("FF7373") );
+            getContentPane().setBackground(Color.LIGHT_GRAY);
             //Color JPanel
-            PanelInfo.setBackground(Color.LIGHT_GRAY);
-            RecientesList.setBackground(Color.lightGray);
-            txtChats.setForeground(Color.WHITE);
-            txtInformacion.setForeground(Color.WHITE);
-            txtNombre.setForeground(Color.WHITE);
-            RecientesList.setForeground(Color.WHITE);
-            Usuario.setForeground(Color.WHITE);
+            ///Color info=new Color(hex("FFAEAE"));
+            PanelInfo.setBackground(Color.DARK_GRAY);
+           //Color fondo Lista
+            //Color lista=new Color(hex("FFAEAE"));
+            RecientesList.setBackground(Color.DARK_GRAY);
+            Color fuente =new Color(hex("000000"));
+            txtChats.setForeground(fuente);
+            txtInformacion.setForeground(fuente);
+            txtNombre.setForeground(fuente);
+            RecientesList.setForeground(fuente);
+            Usuario.setForeground(fuente);
         }
 
         public void windowClosing(java.awt.event.WindowEvent evt){
-            JOptionPane.showMessageDialog(null, "Cerrar");
         }
 
         public void windowActivated(java.awt.event.WindowEvent evt){
@@ -95,8 +96,13 @@ public class Chat extends javax.swing.JFrame {
             .addGap(0, 300, Short.MAX_VALUE)
         );
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("BirdBeep");
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        setTitle("BirBeep");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         txtInformacion.setText("Informacion Usuario");
 
@@ -136,7 +142,7 @@ public class Chat extends javax.swing.JFrame {
 
         txtChats.setText("Chat Recientes");
 
-        btnConversacion.setText("Conversacion Reciente");
+        btnConversacion.setText("Iniciar conversacion");
         btnConversacion.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnConversacionActionPerformed(evt);
@@ -197,6 +203,26 @@ public class Chat extends javax.swing.JFrame {
         cargarchat();
     }//GEN-LAST:event_btnConversacionActionPerformed
 
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        cerrar();
+    }//GEN-LAST:event_formWindowClosing
+
+    public void cerrar(){
+    Object [] opciones ={"Aceptar","Cancelar"};
+    int eleccion = JOptionPane.showOptionDialog(rootPane,"¿Desea salir de Birdbeep?","Birdbeep",
+    JOptionPane.YES_NO_OPTION,
+    JOptionPane.QUESTION_MESSAGE,null,opciones,"Aceptar");
+    if (eleccion == JOptionPane.YES_OPTION){
+        System.exit(0);
+    }else{}
+    }
+    
+    private int hex( String color_hex )
+    {
+        return Integer.parseInt(color_hex,  16 );
+    }
+    
+    
     public void cargarLista(){      
         ArrayList<String>elementos=new ArrayList<>();
         elementos.add("Jose");
