@@ -14,4 +14,5 @@ public class PeticionUPDATEMsg extends Peticion{
 	public void setEmisor(Usuarios emisor) {
 		this.emisor = emisor;
 	}
+	
 }

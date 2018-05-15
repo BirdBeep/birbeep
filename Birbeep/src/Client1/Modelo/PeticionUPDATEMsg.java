@@ -1,7 +1,7 @@
 package Client1.Modelo;
 
 public class PeticionUPDATEMsg extends Peticion{
-	private Usuarios emisor,receptor;
+	private Usuarios emisor;
 	public PeticionUPDATEMsg(){};
 	public PeticionUPDATEMsg(Usuarios emisor){
 		super(4);

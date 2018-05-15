@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
-import Client1.Modelo.PeticionUPDATEUser;
+import Client1.Modelo.PeticionUPDATEUsers;
 
 public class Listener extends Thread {
 	private DatagramSocket dtgs;
@@ -16,9 +16,9 @@ public class Listener extends Thread {
 			input = new DatagramPacket(buffer, buffer.length);
 			dtgs = new DatagramSocket(60000);
 			dtgs.receive(input);
-			PeticionUPDATEUser peticion = new PeticionUPDATEUser();
+			//PeticionUPDATEUsers peticion = new PeticionUPDATEUsers(1,SSLConexion.getUser());
 			Sender sender = SSLConexion.getSender();
-			sender.setPeticion(peticion);
+			//sender.setPeticion(peticion);
 			sender.interrupt();//sender.notify();
 		} catch (IOException e) {
 			System.out.println(e.getMessage());

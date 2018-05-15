@@ -1,5 +1,7 @@
 package Entidades;
 
+import Entidades.Usuarios;
+
 public class PeticionLOGIN extends Peticion{
 private Usuarios usuario;
 	

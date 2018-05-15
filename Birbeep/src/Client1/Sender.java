@@ -6,7 +6,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ import Client1.Modelo.Conversaciones;
 import Client1.Modelo.Mensajes;
 import Client1.Modelo.Peticion;
 import Client1.Modelo.PeticionMSG;
-import Client1.Modelo.PeticionUPDATEUser;
+import Client1.Modelo.PeticionUPDATEUsers;
 import Client1.Modelo.Usuarios;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
@@ -32,8 +31,7 @@ import flexjson.transformer.IterableTransformer;
 public class Sender extends Thread {
 	private SSLSocket socket;
 	private Peticion peticion;
-	private List<Usuarios> usuarios;
-	private List<Mensajes> mensajes;
+	
 	public void run() {
 		socket = SSLConexion.getSocket();
 		if(socket!=null){
@@ -52,50 +50,56 @@ public class Sender extends Thread {
 						ois = new ObjectInputStream(socket.getInputStream());
 						int tipo=peticion.getTipo();
 						switch (tipo) {
-						case 1://Solicitud de LOGIN
-							Usuarios user= new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
-							SSLConexion.setUser(user);
+						case 1://Login
+							Usuarios usuario= new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
+							SSLConexion.setUser(usuario);
 							break;
-						case 2://Actualizar USUARIOS
-							do{
-								Usuarios usuario= new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
-								usuarios.add(usuario);
-							}while(ois.readObject()!=null);
+						case 2://Lista de usuarios
+							Usuarios us;
+							List<Usuarios> usuarios=new ArrayList<Usuarios>();
+							try{
+								do{
+									us=new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
+									usuarios.add(us);
+								}while(true);
+							}catch(EOFException e){
+								for(Usuarios u:usuarios){
+									System.out.println(u.getNombre());
+								}
+							}
+									
 							break;
-						case 3://Conversaciones
-							Conversaciones conver=null;
+						case 3://Lista conversaciones
+							Conversaciones conv;
 							List<Conversaciones> convs=new ArrayList<Conversaciones>();
 							try{
 								do{
-									conver= new JSONDeserializer<Conversaciones>().deserialize(ois.readObject().toString(),Conversaciones.class);
-									convs.add(conver);
+									conv = new JSONDeserializer<Conversaciones>().deserialize(ois.readObject().toString(),Conversaciones.class);
+									convs.add(conv);
 								}while(ois.readObject()!=null);
 							}catch(EOFException e){
-								System.out.println(convs.get(0).getIdConversacion());
+								System.out.println(convs.get(convs.size()-1).getIdConversacion());
 							}
 							break;
-						case 4://Actualizar mensajes
-							Mensajes mensaje=null;
+						case 4://Lista de mensajes
+							Mensajes m;
 							List<Mensajes> mnsjs=new ArrayList<Mensajes>();
 							try{
 								do{
-									mensaje= new JSONDeserializer<Mensajes>().deserialize(ois.readObject().toString(),Mensajes.class);
-									mnsjs.add(mensaje);
+									m = new JSONDeserializer<Mensajes>().deserialize(ois.readObject().toString(),Mensajes.class);
+									mnsjs.add(m);
 								}while(ois.readObject()!=null);
 							}catch(EOFException e){
-								System.out.println(Security.descrifrar(mnsjs.get(mnsjs.size()-1).getTexto()));
+								System.out.println(mnsjs.get(mnsjs.size()-1).getTexto());
 							}
 							break;
 						case 5://Enviar mensaje
-							//Mensajes mensaje = new JSONDeserializer<Mensajes>().deserialize(ois.readObject().toString(),Mensajes.class);
-							//System.out.println(Security.descrifrar(mensaje.getTexto()));
+							Usuarios user=new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
 							break;
-						case 6://Certificado
-							PublicKey cert= new JSONDeserializer<PublicKey>().deserialize(ois.readObject().toString(),PublicKey.class);//Probar con Key en lugar de Certificate
-							//SSLConexion.setCert(cert);
-							System.out.println(cert.toString());
-							break;
-						case 7://LOGOUT
+						case 6://Enviar certificado
+							Certificate cert= new JSONDeserializer<Certificate>().deserialize(ois.readObject().toString(),Certificate.class);//Probar con Key en lugar de Certificate
+							SSLConexion.setCert(cert);
+							//System.out.println(cert.toString());
 							break;
 						default:
 							break;

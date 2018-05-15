@@ -37,13 +37,13 @@ public class MensajeDAO {
 			}
 		}
 	}
-	public List<Mensajes> recuperarMensajes(Usuarios user) {
+	public List<Mensajes> recuperarMensajes(Usuarios u) {
 		List<Mensajes> mnsgs=new ArrayList<Mensajes>();
 		PreparedStatement orden=null;
 		ResultSet datos=null;
 		try{
 			orden=con.prepareStatement(DbQuery.getMensajes());
-			orden.setString(1, user.getId());
+			orden.setString(1, u.getId());
 			datos=orden.executeQuery();
 			while (datos.next()){
 				Mensajes m = new Mensajes();

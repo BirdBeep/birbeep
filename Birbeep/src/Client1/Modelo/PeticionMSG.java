@@ -5,7 +5,7 @@ public class PeticionMSG extends Peticion{
 	private Mensajes mensaje;
 	
 	public PeticionMSG(){
-		super(5);
+		super();
 	};
 	
 	public PeticionMSG(int tipo, Mensajes mensaje) {

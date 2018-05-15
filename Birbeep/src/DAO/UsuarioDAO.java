@@ -84,13 +84,14 @@ public class UsuarioDAO {
 		}
 		return usuario;
 	}
-	public List<Usuarios> recuperarTodos() {
+	public List<Usuarios> recuperarTodos(Usuarios cli) {
 		PreparedStatement orden=null;
 		ResultSet datos=null;
 		List<Usuarios> contactos=new ArrayList<Usuarios>();
 		Usuarios usuario=new Usuarios();
 		try {
 			orden =con.prepareStatement(DbQuery.getAllUsers());
+			orden.setString(1, cli.getId());
 			datos=orden.executeQuery();
 			while (datos.next()){
 				usuario.setId(datos.getString(1));

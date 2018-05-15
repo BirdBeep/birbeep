@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import Entidades.Conversaciones;
 import Entidades.Participantes;
 import Entidades.Usuarios;
 import Util.DbQuery;
@@ -38,7 +39,7 @@ public class ParticipantesDAO {
 	}
 	
 	
-	public List<Participantes> recuperarPorUsuario(Usuarios cli) {
+	public List<Participantes> recuperarTodasConv(Usuarios cli) {
 		List<Participantes> cons=new ArrayList<Participantes>();
 		PreparedStatement orden=null;
 		ResultSet datos=null;
@@ -64,5 +65,5 @@ public class ParticipantesDAO {
 		}
 		return cons;
 	}
-	
+
 }

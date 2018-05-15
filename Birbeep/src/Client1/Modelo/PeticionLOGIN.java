@@ -1,5 +1,6 @@
 package Client1.Modelo;
 
+
 public class PeticionLOGIN extends Peticion{
 private Usuarios usuario;
 	

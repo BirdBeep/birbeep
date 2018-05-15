@@ -26,7 +26,7 @@ import Client1.Modelo.PeticionCERT;
 import Client1.Modelo.PeticionMSG;
 import Client1.Modelo.PeticionUPDATEConv;
 import Client1.Modelo.PeticionUPDATEMsg;
-import Client1.Modelo.PeticionUPDATEUser;
+import Client1.Modelo.PeticionUPDATEUsers;
 import Client1.Modelo.Usuarios;
 
 public class SSLConexion {
@@ -43,21 +43,20 @@ public class SSLConexion {
 	
 	public static void main (String [] args){
 		initSSLConexion();
-		//PeticionUPDATEUser pet = new PeticionUPDATEUser();
+		Usuarios u=new Usuarios();
+		u.setId("client1");
+		/*PeticionUPDATEMsg p = new PeticionUPDATEMsg(u);
+		sender.setPeticion(p);
+		sender.interrupt();
+		*/
+		//PeticionUPDATEConv pet=new PeticionUPDATEConv(u);
 		//sender.setPeticion(pet);
 		//sender.interrupt();
-		/*Usuarios u=new Usuarios();
-		u.setId("client1");
-		PeticionUPDATEConv pt=new PeticionUPDATEConv(u);
+		//PeticionCERT p1 = new PeticionCERT("client3");
+		//sender.setPeticion(p1);
+		//sender.interrupt();
+		PeticionUPDATEUsers pt=new PeticionUPDATEUsers(u);
 		sender.setPeticion(pt);
-		sender.interrupt();*/
-		/*Usuarios u=new Usuarios();
-		u.setId("client1");
-		PeticionUPDATEMsg p = new PeticionUPDATEMsg(u);
-		sender.setPeticion(p);
-		sender.interrupt();*/
-		PeticionCERT p1 = new PeticionCERT("client3");
-		sender.setPeticion(p1);
 		sender.interrupt();
 		/*try {
 			Thread.sleep(2000);
@@ -73,7 +72,7 @@ public class SSLConexion {
 			e.printStackTrace();
 		}
 		sender.setPeticion(p2);
-		sender.interrupt();*///sender.notify()
+		sender.interrupt();//sender.notify()*/
 		//PeticionUPDATEUser p=new PeticionUPDATEUser(1,u);//getUser() en lugar de new Usuarios()
 	}
 

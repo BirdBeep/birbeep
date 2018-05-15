@@ -95,7 +95,7 @@ public class Security {
 
 	}
 
-	public static String cifrar(String text) throws Exception {
+	public static String cifrar(String text,Certificate cert) throws Exception {
 		// Pasamos el String a byte[]
 		byte[] mensaje = text.getBytes(StandardCharsets.UTF_8);
 
@@ -125,30 +125,17 @@ public class Security {
 		aes.init(Cipher.ENCRYPT_MODE, key);
 		byte[] encriptado = aes.doFinal(mensaje);
 
-		// Obtenemos la clave publica del receptor
-		/*ks = KeyStore.getInstance("JKS");
-		ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");
-		ksbufin = new BufferedInputStream(ksfis);
-		ks.load(ksbufin, "123456".toCharArray());
-		Certificate cert = ks.getCertificate("sebasKey");*/
-		privateKey = (PrivateKey) ks.getKey("sebasKey", "123456".toCharArray());
-
-		// Generamos una clave AES para el cifrado simétrico
-		keyGenerator = KeyGenerator.getInstance("AES");
-		keyGenerator.init(128);
-		key = keyGenerator.generateKey();
-
 		// Obtenemos la suma del mensaje cifrado con su hash firmado
 		byte[] mensaje2 = new byte[encriptado.length + 256];
 		System.arraycopy(encriptado, 0, mensaje2, 0, encriptado.length);
 		System.arraycopy(firma, 0, mensaje2, encriptado.length, 256);
 
 		// Obtenemos la clave publica del receptor
-		ks = KeyStore.getInstance("JKS");
+		/*ks = KeyStore.getInstance("JKS");
 		ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");
 		ksbufin = new BufferedInputStream(ksfis);
 		ks.load(ksbufin, "123456".toCharArray());
-		Certificate cert = ks.getCertificate("sebasKey");
+		Certificate cert = ks.getCertificate("sebasKey");*/
 		publicKey = (PublicKey) cert.getPublicKey();
 
 		// Ciframos la clave generada
@@ -164,11 +151,12 @@ public class Security {
 		String msg = new String(mensaje3, StandardCharsets.ISO_8859_1);
 		return msg;
 
-}
+	}
 	
 	public static String password (String pass) throws Exception{
 		digest= MessageDigest.getInstance("MD5");		 
 		return new String(digest.digest(pass.getBytes(StandardCharsets.UTF_8)), StandardCharsets.ISO_8859_1);
 		 
 	}
+
 }
