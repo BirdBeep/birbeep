@@ -24,7 +24,7 @@ public class MensajeDAO {
 			orden.setString(1, mensaje.getEmisor());
 			orden.setString(2, mensaje.getReceptor());
 			orden.setString(3, mensaje.getTexto());
-			orden.setString(4, mensaje.getConver());
+			orden.setInt(4, mensaje.getConver());
 			orden.executeUpdate();
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -50,7 +50,7 @@ public class MensajeDAO {
 				m.setEmisor(datos.getString(1));
 				m.setReceptor(datos.getString(2));
 				m.setTexto(datos.getString(3));
-				m.setConver(datos.getString(4));
+				m.setConver(datos.getInt(4));
 				mnsgs.add(m);
 			}
 		}catch(SQLException e){

@@ -2,7 +2,7 @@ package Entidades;
 
 public class Participantes {
  private String user;
- private String idconversacion;
+ private int idconversacion;
  
  public String getUser() {
 	return user;
@@ -10,10 +10,10 @@ public class Participantes {
 public void setUser(String user) {
 	this.user = user;
 }
-public String getIdconversacion() {
+public int getIdconversacion() {
 	return idconversacion;
 }
-public void setIdconversacion(String idconversacion) {
+public void setIdconversacion(int idconversacion) {
 	this.idconversacion = idconversacion;
 
 }

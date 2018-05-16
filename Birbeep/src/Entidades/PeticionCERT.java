@@ -6,7 +6,7 @@ public class PeticionCERT extends Peticion{
 	public PeticionCERT(){};
 	
 	public PeticionCERT(String id){
-		super(3);
+		super(6);
 		this.id=id;
 	}
 

@@ -1,4 +1,4 @@
-package Client1;
+package Client;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -20,62 +20,20 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import Client1.Modelo.Mensajes;
-import Client1.Modelo.Peticion;
-import Client1.Modelo.PeticionCERT;
-import Client1.Modelo.PeticionMSG;
-import Client1.Modelo.PeticionUPDATEConv;
-import Client1.Modelo.PeticionUPDATEMsg;
-import Client1.Modelo.PeticionUPDATEUsers;
-import Client1.Modelo.Usuarios;
+import Client.Modelo.PeticionMensaje;
+import Client.Modelo.Mensajes;
 
-public class SSLConexion {
+public class SSLConexion extends Thread{
 	private static final int PORT = 12345;
-	private static InetAddress server;
-	private static SSLContext sc;
+	private static  InetAddress server;
+	private static  SSLContext sc;
 	private static SSLSocketFactory ssf;
 	private static SSLSocket socket;
-	private static Sender sender = null;
-	private static Listener listener = null;
-	private static Usuarios user;
+	private static Sender sender = new Sender();
+	private static Listener listener = new Listener();
 	private static Certificate cert;
 	
-	
-	public static void main (String [] args){
-		initSSLConexion();
-		//Usuarios u=new Usuarios();
-		//u.setId("client1");
-		//PeticionUPDATEMsg p = new PeticionUPDATEMsg(u);
-		//sender.setPeticion(p);
-		//sender.interrupt();
-		
-		//PeticionUPDATEConv pet=new PeticionUPDATEConv(u);
-		//sender.setPeticion(pet);
-		//sender.interrupt();
-		//PeticionUPDATEUsers pt=new PeticionUPDATEUsers(u);
-		//sender.setPeticion(pt);
-		//sender.interrupt();
-		PeticionCERT p1 = new PeticionCERT("client3");
-		sender.setPeticion(p1);
-		sender.interrupt();
-		/*try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		/*PeticionMSG p2=null;
-		try {
-			p2 = new PeticionMSG(new Mensajes("client1","client3",Security.cifrar("VaMoS LoKo!!",getCert()),"conv01"));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		sender.setPeticion(p2);
-		sender.interrupt();//sender.notify()*/
-	}
-
-	public static void initSSLConexion() {
+	public static void initSSLConexion() {//run NO ES STATIC
 		TrustManager[] trustManagers = null;
 		KeyManager[] keyManagers = null;
 		try {
@@ -107,10 +65,6 @@ public class SSLConexion {
 			ssf = sc.getSocketFactory();
 			socket = (SSLSocket) ssf.createSocket(server, PORT);
 			socket.startHandshake();
-			
-			sender = new Sender();
-
-			listener = new Listener();
 
 			sender.start();
 			listener.start();
@@ -143,7 +97,7 @@ public class SSLConexion {
 			FileNotFoundException, IOException {
 		KeyStore trustedStore = KeyStore.getInstance("JKS");
 		trustedStore.load(new FileInputStream(
-				"src/Client1/certs/sebasTrustedCerts.jks"), "111111"
+				"src/Main/certs/client1/sebasTrustedCerts.jks"), "111111"
 				.toCharArray());
 
 		TrustManagerFactory tmf = TrustManagerFactory
@@ -159,7 +113,7 @@ public class SSLConexion {
 			FileNotFoundException, IOException, UnrecoverableKeyException {
 		KeyStore keyStore = KeyStore.getInstance("JKS");
 		keyStore.load(
-				new FileInputStream("src/Client1/certs/sebasKey.jks"),
+				new FileInputStream("src/Main/certs/client1/sebasKey.jks"),
 				"123456".toCharArray());
 
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory
@@ -221,13 +175,6 @@ public class SSLConexion {
 	public static int getPort() {
 		return PORT;
 	}
-	public static Usuarios getUser() {
-		return user;
-	}
-
-	public static void setUser(Usuarios user) {
-		SSLConexion.user = user;
-	}
 	
 	public static void setCert(Certificate cert){
 		SSLConexion.cert=cert;
@@ -236,4 +183,5 @@ public class SSLConexion {
 	public static Certificate getCert(){
 		return cert;
 	}
+
 }

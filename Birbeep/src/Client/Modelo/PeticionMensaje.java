@@ -1,13 +1,14 @@
-package Client1.Modelo;
+package Client.Modelo;
 
-public class PeticionMSG extends Peticion{
+public class PeticionMensaje extends Peticion{
 	
 	private Mensajes mensaje;
 	
-	public PeticionMSG(){
+	public PeticionMensaje(){
+		super();
 	};
 	
-	public PeticionMSG( Mensajes mensaje) {
+	public PeticionMensaje(Mensajes mensaje) {
 		super(5);
 		this.mensaje=mensaje;
 	}

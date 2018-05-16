@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public class Sender extends Thread {
 									us=new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
 									usuarios.add(us);
 								}while(true);
-							}catch(EOFException e){
+							}catch(NullPointerException e){
 								for(Usuarios u:usuarios){
 									System.out.println(u.getNombre());
 								}
@@ -76,9 +77,11 @@ public class Sender extends Thread {
 								do{
 									conv = new JSONDeserializer<Conversaciones>().deserialize(ois.readObject().toString(),Conversaciones.class);
 									convs.add(conv);
-								}while(ois.readObject()!=null);
-							}catch(EOFException e){
-								System.out.println(convs.get(convs.size()-1).getIdConversacion());
+								}while(true);
+							}catch(NullPointerException e){
+								for(Conversaciones con:convs){
+									System.out.println(con.getIdConversacion());
+								}
 							}
 							break;
 						case 4://Lista de mensajes
@@ -88,24 +91,25 @@ public class Sender extends Thread {
 								do{
 									m = new JSONDeserializer<Mensajes>().deserialize(ois.readObject().toString(),Mensajes.class);
 									mnsjs.add(m);
-								}while(ois.readObject()!=null);
-							}catch(EOFException e){
-								System.out.println(mnsjs.get(mnsjs.size()-1).getTexto());
+								}while(true);
+							}catch(NullPointerException e){
+								for(Mensajes mensa:mnsjs){
+									System.out.println(mensa.getTexto());
+								}
 							}
 							break;
 						case 5://Enviar mensaje
-							Usuarios user=new JSONDeserializer<Usuarios>().deserialize(ois.readObject().toString(),Usuarios.class);
+							Mensajes mensaje=new JSONDeserializer<Mensajes>().deserialize(ois.readObject().toString(),Mensajes.class);
+							System.out.println(Security.descrifrar(mensaje.getTexto()));
 							break;
 						case 6://Enviar certificado
-							Certificate cert= new JSONDeserializer<Certificate>().deserialize(ois.readObject().toString(),Certificate.class);//Probar con Key en lugar de Certificate
-							SSLConexion.setCert(cert);
-							//System.out.println(cert.toString());
+							PublicKey cert= new JSONDeserializer<PublicKey>().deserialize(ois.readObject().toString(),PublicKey.class);//Probar con Key en lugar de Certificate
+							//SSLConexion.setCert(cert);
+							System.out.println(cert.toString());
 							break;
 						default:
 							break;
 						}
-						oos.close();	
-						ois.close();
 					} catch (IOException | ClassNotFoundException ioe) {
 						ioe.printStackTrace();
 					} catch (Exception e) {

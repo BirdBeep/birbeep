@@ -1,4 +1,4 @@
-package Client1;
+package Client;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
@@ -17,13 +18,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Security {
 
-	//public static void main(String[] args) throws Exception {
-		//System.out.println(descrifrar(cifrar("Hola")));
-		//System.out.println(descrifrar(cifrar("Adios")));
-		//System.out.println(descrifrar(cifrar("Esto es una prueba")));
-
-	//}
-
 	public static KeyStore ks;
 	public static FileInputStream ksfis;
 	public static BufferedInputStream ksbufin;
@@ -34,8 +28,12 @@ public class Security {
 
 	public static Key privateKey, publicKey, key;
 	public static KeyGenerator keyGenerator;
+	
+	public static void main(String [] args) throws Exception {
+		System.out.println(descrifrar(cifrar("Hola")));
+	}
 
-	public static String descrifrar(String msg) throws Exception {//PARA EL FUNCIONAMIENTO CON EMISOR Y RECEPTOR HACE FALTA EL PARAM CERT
+	public static String descrifrar(String msg) throws Exception {
 		// Pasamos el String a byte[]
 		byte[] encriptado = msg.getBytes(StandardCharsets.ISO_8859_1);
 
@@ -50,25 +48,24 @@ public class Security {
 
 		// Obtenemos la clave privada del receptor
 		ks = KeyStore.getInstance("JKS");
-		ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");//OJO al ser el client1 donde se esta ejecutando la app tiene que ser este
+		ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");
 		ksbufin = new BufferedInputStream(ksfis);
 		ks.load(ksbufin, "123456".toCharArray());
 		privateKey = (PrivateKey) ks.getKey("sebasKey", "123456".toCharArray());
 
-		// Descriframos la clave simétrica
+		// Descriframos la clave simÃ©trica
 		rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		rsa.init(Cipher.DECRYPT_MODE, privateKey);
 		byte[] bkey = rsa.doFinal(encodedKey);
 		key = new SecretKeySpec(bkey, 0, 16, "AES");
 
-		// Obtenemos la clave pública del emisor
+		// Obtenemos la clave pÃºblica del emisor
 		ks = KeyStore.getInstance("JKS");
-		ksfis = new FileInputStream("src/Client1/certs/sebasKey.jks");
+		ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");
 		ksbufin = new BufferedInputStream(ksfis);
 		ks.load(ksbufin, "123456".toCharArray());
 		Certificate cert = ks.getCertificate("sebasKey");
 		publicKey = (PublicKey) cert.getPublicKey();
-		//AQUI SOBRA TODA LA LOGICA, SOLO CON RECIBIR EL CERT POR PARAMETRO Y LA CON ULTIMA LINEA DE CODIGO TIENE QUE VALER
 
 		// Desciframos el hash
 		rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -95,7 +92,7 @@ public class Security {
 
 	}
 
-	public static String cifrar(String text, Certificate cert) throws Exception {//
+	public static String cifrar(String text) throws Exception {
 		// Pasamos el String a byte[]
 		byte[] mensaje = text.getBytes(StandardCharsets.UTF_8);
 
@@ -105,7 +102,7 @@ public class Security {
 
 		// Obtenemos la clave privada del emisor
 		ks = KeyStore.getInstance("JKS");
-		ksfis = new FileInputStream("src/Client1/certs/sebasKey.jks");
+		ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");
 		ksbufin = new BufferedInputStream(ksfis);
 		ks.load(ksbufin, "123456".toCharArray());
 		privateKey = (PrivateKey) ks.getKey("sebasKey", "123456".toCharArray());
@@ -115,7 +112,7 @@ public class Security {
 		rsa.init(Cipher.ENCRYPT_MODE, privateKey);
 		byte[] firma = rsa.doFinal(hash);
 
-		// Generamos una clave AES para el cifrado simétrico
+		// Generamos una clave AES para el cifrado simÃ©trico
 		keyGenerator = KeyGenerator.getInstance("AES");
 		keyGenerator.init(128);
 		key = keyGenerator.generateKey();
@@ -131,11 +128,11 @@ public class Security {
 		System.arraycopy(firma, 0, mensaje2, encriptado.length, 256);
 
 		// Obtenemos la clave publica del receptor
-		/*ks = KeyStore.getInstance("JKS");
+		ks = KeyStore.getInstance("JKS");
 		ksfis = new FileInputStream("src/Main/certs/client1/sebasKey.jks");
 		ksbufin = new BufferedInputStream(ksfis);
 		ks.load(ksbufin, "123456".toCharArray());
-		Certificate cert = ks.getCertificate("sebasKey");*/
+		Certificate cert = ks.getCertificate("sebasKey");
 		publicKey = (PublicKey) cert.getPublicKey();
 
 		// Ciframos la clave generada

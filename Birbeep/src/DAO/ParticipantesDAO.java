@@ -24,7 +24,7 @@ public class ParticipantesDAO {
 		try {
 			orden =con.prepareStatement(DbQuery.setUsersConver());
 			orden.setString(1, part.getUser());
-			orden.setString(2, part.getIdconversacion());
+			orden.setInt(2, part.getIdconversacion());
 			orden.executeUpdate();
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -50,7 +50,7 @@ public class ParticipantesDAO {
 			if(datos.next()){
 				Participantes cs = new Participantes();
 				cs.setUser(datos.getString(1));
-				cs.setIdconversacion(datos.getString(2));
+				cs.setIdconversacion(datos.getInt(2));
 				cons.add(cs);
 			}
 		}catch(SQLException e){
@@ -64,6 +64,32 @@ public class ParticipantesDAO {
 			}
 		}
 		return cons;
+	}
+	
+	public List<Integer> recuperar_id_conversacion(String id_user){
+		List <Integer> id=new ArrayList<Integer>();
+		int conversacion;
+		PreparedStatement orden=null;
+		ResultSet datos=null;
+		try{
+			orden =con.prepareStatement(DbQuery.getUsersConver());
+			orden.setString(1, id_user);
+			datos=orden.executeQuery();
+			if(datos.next()){
+				conversacion=datos.getInt(2);
+				id.add(conversacion);
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		} finally{
+			try {
+				orden.close();
+				datos.close();
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			}
+		}
+		return id;
 	}
 
 }

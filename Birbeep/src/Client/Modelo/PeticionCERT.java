@@ -1,4 +1,4 @@
-package Client1.Modelo;
+package Client.Modelo;
 
 public class PeticionCERT extends Peticion{
 	private String id;

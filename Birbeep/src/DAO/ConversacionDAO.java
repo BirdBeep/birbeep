@@ -22,7 +22,7 @@ public class ConversacionDAO {
 		PreparedStatement orden=null;
 		try {
 			orden =con.prepareStatement(DbQuery.setConver());
-			orden.setString(1, conver.getIdConversacion());
+			orden.setInt(1, conver.getIdConversacion());
 			orden.executeUpdate();
 		} catch (SQLException e) {
 			if (e.getErrorCode() == MYSQL_DUPLICATE_PK) {
@@ -39,16 +39,16 @@ public class ConversacionDAO {
 		}
 		return true;
 	}
-	public Conversaciones recuperarConv(String idConver)  {
+	public Conversaciones recuperarConv(int idConver)  {
 		Conversaciones c=new Conversaciones();
 		PreparedStatement orden=null;
 		ResultSet datos=null;
 		try {
 			orden =con.prepareStatement(DbQuery.getConver());
-			orden.setString(1, idConver);
+			orden.setInt(1, idConver);
 			datos=orden.executeQuery();
 			if(datos.next()){
-				c.setIdConversacion(datos.getString(1));
+				c.setIdConversacion(datos.getInt(1));
 				//c.setFecha(datos.getDate(2));
 			}
 		} catch (SQLException e) {

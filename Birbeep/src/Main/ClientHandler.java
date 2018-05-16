@@ -18,6 +18,7 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Scanner;
 
@@ -25,8 +26,6 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-
-import com.google.gson.Gson;
 
 import DAO.MensajeDAO;
 import DAO.ParticipantesDAO;
@@ -40,7 +39,8 @@ import Entidades.Mensajes;
 import Entidades.Participantes;
 import Entidades.Peticion;
 import Entidades.PeticionCERT;
-import Entidades.PeticionLOGIN;
+import Entidades.PeticionLOGOUT;
+import Entidades.PeticionLogin;
 import Entidades.PeticionMSG;
 import Entidades.PeticionUPDATEConv;
 import Entidades.PeticionUPDATEMsg;
@@ -67,42 +67,42 @@ class ClientHandler extends Thread {
 	private static final int PORT_UDP = 60000;
 	private static final String TOKEN="true";//Esto avisa al cliente de que tiene mensajes para leer..
 	private String ip;
-	private UsuarioDAO serv1;
-	private MensajeDAO serv2;
-	private ConexionDAO serv3; 
-	private ConversacionDAO serv4;
-	private ParticipantesDAO serv5;
-	private ConexionMySQL con;
+	private UsuarioDAO usuarioDAO;
+	private MensajeDAO mensajeDAO;
+	private ConexionDAO conexionDAO; 
+	private ConversacionDAO conversacionDAO;
+	private ParticipantesDAO participantesDAO;
+	private ConexionMySQL conexion;
 	private KeyStore ks;
 	private FileInputStream ksfis;
 	private BufferedInputStream ksbufin;
 	
 	/**
-	 * Constructor de la clase, inicializa: servicios para interactuar con la capa DAO y
-	 * los flujos del socket.
+	 * Constructor de la clase, inicializa: servicios para interactuar con la capa DAO
 	 * @param socket seguro recibido desde el servidor
-	 * @throws SQLException si hay problemas al inicializar la conexión
+	 * @throws SQLException si hay problemas al inicializar la conexiÃ³n
 	 */
 	public ClientHandler(Socket socket) throws SQLException {
-		con=new ConexionMySQL();
+		conexion=new ConexionMySQL();
 		client = socket;
 		ip=client.getInetAddress().toString();
-		serv1=new UsuarioDAO(con.getConexion());
-		serv2=new MensajeDAO(con.getConexion());
-		serv3=new ConexionDAO(con.getConexion());
-		serv4=new ConversacionDAO(con.getConexion());
-		serv5=new ParticipantesDAO(con.getConexion());
-		try {
-			input = new ObjectInputStream(client.getInputStream());
-			output = new ObjectOutputStream(client.getOutputStream());
-		} catch (IOException ioEx) {
-			System.out.println(ioEx.getMessage());
-		}
+		usuarioDAO=new UsuarioDAO(conexion.getConexion());
+		mensajeDAO=new MensajeDAO(conexion.getConexion());
+		conexionDAO=new ConexionDAO(conexion.getConexion());
+		conversacionDAO=new ConversacionDAO(conexion.getConexion());
+		participantesDAO=new ParticipantesDAO(conexion.getConexion());
 	}
 	public void run() {
 		Peticion peticion=null;
 		Object obj =null;
+		int tipo=0;
 		do{
+			try {
+				input = new ObjectInputStream(client.getInputStream());
+				output = new ObjectOutputStream(client.getOutputStream());
+			} catch (IOException ioEx) {
+				System.out.println(ioEx.getMessage());
+			}
 			try {
 				obj=input.readObject();
 				peticion = new JSONDeserializer<Peticion>().deserialize(obj.toString(),Peticion.class);
@@ -111,15 +111,16 @@ class ClientHandler extends Thread {
 			} catch (IOException e) {
 				System.out.println(e.getMessage());
 			}
-			int tipo=peticion.getTipo();
+			tipo=peticion.getTipo();
 			switch (tipo) {
 			case 1:
-				PeticionLOGIN peticiononLOGIN = (PeticionLOGIN) new JSONDeserializer<PeticionLOGIN>().deserialize(obj.toString(),PeticionLOGIN.class);
+				PeticionLogin peticiononLOGIN = (PeticionLogin) new JSONDeserializer<PeticionLogin>().deserialize(obj.toString(),PeticionLogin.class);
 				try {
 					login(peticiononLOGIN);
 				} catch (IOException e) {
 					System.out.println(e.getMessage());
 				}
+				break;
 			case 2:
 				PeticionUPDATEUsers peticionUPDATEUsers= (PeticionUPDATEUsers) new JSONDeserializer<PeticionUPDATEUsers>().deserialize(obj.toString(),PeticionUPDATEUsers.class);
 				try {
@@ -143,6 +144,7 @@ class ClientHandler extends Thread {
 				} catch (IOException e) {
 					System.out.println(e.getMessage());
 				}
+				break;
 			case 5:
 				PeticionMSG peticionMSG= (PeticionMSG) new JSONDeserializer<PeticionMSG>().deserialize(obj.toString(),PeticionMSG.class);
 				try {
@@ -159,25 +161,32 @@ class ClientHandler extends Thread {
 					System.out.println(e1.getMessage());
 				}
 				break;
+			case 7:
+				PeticionLOGOUT peticionLOGOUT= (PeticionLOGOUT) new JSONDeserializer<PeticionLOGOUT>().deserialize(obj.toString(),PeticionLOGOUT.class);
+				try {
+					Usuarios usuario=peticionLOGOUT.getUsuario();
+					usuarioDAO.cerrar_usuario(usuario);
+				} catch (Exception e1) {
+					System.out.println(e1.getMessage());
+				}
 			default:
 				break;
 			}
-		}while(true);
+		}while(tipo<7);
 	}
 	/**
 	 * 
 	 * @param peticion
 	 * @throws IOException
 	 */
-	private void login (PeticionLOGIN peticion) throws IOException {
+	private void login (PeticionLogin peticion) throws IOException {
 		Usuarios usuario = peticion.getUsuario();
-		Usuarios user=serv1.recuperarUsuario(usuario.getEmail());
-		System.out.println(user.getPassword());
+		Usuarios user=usuarioDAO.recuperarUsuario(usuario.getEmail());
 		if(user.getPassword()!=null) {
 			Conexiones conexion=new Conexiones();
 			conexion.setIp(ip);
 			conexion.setUser(user.getId());
-			serv3.altaConexion(conexion);
+			conexionDAO.altaConexion(conexion);
 			if(usuario.getPassword().compareTo(user.getPassword())==0){
 				JSONSerializer serializer = new JSONSerializer();
 				String ms=serializer.exclude("*.class").serialize(user);
@@ -191,7 +200,6 @@ class ClientHandler extends Thread {
 				output.flush();
 			}
 		}else {
-			System.out.println("aqui");
 			user.setNombre("nouser");
 			JSONSerializer serializer = new JSONSerializer(); 
 			String ms=serializer.exclude("*.class").serialize(user);
@@ -201,7 +209,7 @@ class ClientHandler extends Thread {
 
 }
 	/**
-	 * El tipo de petición ha sido "actualización", recuperamos la info de todos los usuarios dados de alta en la app
+	 * El tipo de peticiÃ³n ha sido "actualizaciÃ³n", recuperamos la info de todos los usuarios dados de alta en la app
 	 * @param peticion 
 	 * @throws Exception capturada en el "run()" para SQLException
 	 * 
@@ -209,18 +217,20 @@ class ClientHandler extends Thread {
 	private void actualizarUsuarios(PeticionUPDATEUsers peticion) throws Exception { //PUEDE SER QUE CONVERSACION SEA NULL CUANDO SE ENTABLA POR VEZ PRIMERA???
 		Usuarios u = new Usuarios();
 		u.setId(peticion.getUsuario().getId());
-		Usuarios cli = serv1.recuperarUsuario(u);
-		List<Usuarios> contactos=serv1.recuperarTodos(cli);
+		Usuarios cli = usuarioDAO.recuperarUsuario(u);
+		List<Usuarios> contactos=usuarioDAO.recuperarTodos(cli);
 		JSONSerializer serializer = new JSONSerializer(); 
 		for(Usuarios us:contactos){
 			String ms=serializer.exclude("*.class").serialize( us );
 			output.writeObject(ms);
 			output.flush();
 		}
-		output.close();
+		output.writeObject(null);
 	}
 	/**
-	 * 
+	 * La peticion ha sido actualizar conversaciones
+	 * Recupera todas en las que el "participante" sea el usuario que las solicita
+	 * Con lo que devuelve la tabla participantes crea instancias de conversaciones para enviar al cliente
 	 * @param peticionUPDATE
 	 * @throws IOException 
 	 */
@@ -229,7 +239,7 @@ class ClientHandler extends Thread {
 		Usuarios us=new Usuarios();
 		us.setId(peticionUPDATE.getUser().getId());
 		List<Participantes> convs=new ArrayList<Participantes>();
-		convs=serv5.recuperarTodasConv(us);
+		convs=participantesDAO.recuperarTodasConv(us);
 		for(Participantes p:convs){
 			Conversaciones c=new Conversaciones();
 			c.setIdConversacion(p.getIdconversacion());
@@ -237,13 +247,11 @@ class ClientHandler extends Thread {
 			output.writeObject(ms);
 			output.flush();
 		}
-		output.close();
+		output.writeObject(null);
 	}
 	/**
-	 * Recuperamos los mensajes de la conversacion en la que participan los dos usuarios correspondientes
-	 * Obtenemos las conversaciones en las que participan cada uno
-	 * Las comparamos y de la que coincida obtenemos los mensajes
-	 * @param peticionUPDMSG con emisor y receptor para obtener los mensajes en los que estos participan
+	 * Recuperamos todos los mensajes de el usuario correspondiente
+	 * @param peticionUPDMSG con emisor
 	 * @throws IOException 
 	 */
 	private void actualizarMensajesConv(PeticionUPDATEMsg peticionUPDMSG) throws IOException {
@@ -251,20 +259,20 @@ class ClientHandler extends Thread {
 		Usuarios emisor=new Usuarios();
 		emisor.setId(peticionUPDMSG.getEmisor().getId());
 		List<Mensajes> mensajes=new ArrayList<Mensajes>();
-		mensajes=serv2.recuperarMensajes(emisor);
+		mensajes=mensajeDAO.recuperarMensajes(emisor);
 		for(Mensajes m:mensajes){
 			String ms=serializer.exclude("*.class").serialize(m);
 			output.writeObject(ms);
 			output.flush();
 		}
-		output.close();
+		output.writeObject(null);
 	}
 	/**
-	 * El tipo de petición ha sido "mensaje", creamos una conversación + una conexión, se comprueba si la conversación ya existe:
+	 * El tipo de peticiÃ³n ha sido "mensaje", creamos una conversaciÃ³n + una conexiÃ³n, se comprueba si la conversaciÃ³n ya existe:
 	 * Dos posibles escenarios -> No existe (gestionConversacion()) o Ya existe (gestionConversacion2())
 	 * Se envia un aviso al destinatario.
-	 * Se envia una respuesta "OK" al usuario que escribió
-	 * @param peticion con los parámetros necesarios (Emisor, receptor, conversación, mensaje)
+	 * Se envia una respuesta "OK" al usuario que escribiÃ³
+	 * @param peticion con los parÃ¡metros necesarios (Emisor, receptor, conversaciÃ³n, mensaje)
 	 * @throws IOException 
 	 */
 	private void recibirMensaje(PeticionMSG peticion) throws IOException {
@@ -273,15 +281,19 @@ class ClientHandler extends Thread {
 		Usuarios userB = new Usuarios();
 		userA.setId(m.getEmisor());
 		userB.setId(m.getReceptor());
-		Usuarios usu_emisor=serv1.recuperarUsuario(userA);
-		Usuarios usu_recep=serv1.recuperarUsuario(userB);	
+		Usuarios usu_emisor=usuarioDAO.recuperarUsuario(userA);
+		Usuarios usu_recep=usuarioDAO.recuperarUsuario(userB);
+		String id_emisor=usu_emisor.getId();
+		String id_receptor=usu_recep.getId();
+		int conver=m.getConver();
+		int id_conversacion=sacar_id_conversacion(id_emisor,id_receptor,conver);
 		Conversaciones conversacion = new Conversaciones();
-		conversacion.setIdConversacion(m.getConver());
+		conversacion.setIdConversacion(id_conversacion);
 		Conexiones conexion=new Conexiones();
 		conexion.setIp(ip);
 		conexion.setUser(usu_emisor.getId());
-		serv3.altaConexion(conexion);
-		if(serv4.altaConversacion(conversacion)){//La conversación es nueva
+		conexionDAO.altaConexion(conexion);
+		if(conversacionDAO.altaConversacion(conversacion)){//La conversaciÃ³n es nueva
 			gestionConversacion(conversacion,usu_emisor,usu_recep,m.getTexto());
 		}else{//Existia la conver
 			gestionConversacion2(conversacion,usu_emisor,usu_recep,m.getTexto());
@@ -292,30 +304,28 @@ class ClientHandler extends Thread {
 		output.writeObject(ms);
 	}
 	/**
-	 * A través del usuario que viene por la petición, obtiene su correspondiente certificado
-	 * A continuación lo enviamos por el flujo
+	 * A travÃ©s del usuario que viene por la peticiÃ³n, obtiene su correspondiente certificado
+	 * A continuaciÃ³n lo enviamos por el flujo
 	 * @param peticionCERT
 	 * @throws Exception
 	 */
 	private void devolverCert(PeticionCERT peticionCERT) throws Exception {
 		Usuarios u=new Usuarios();
 		u.setId(peticionCERT.getId());
-		Usuarios usr=serv1.recuperarUsuario(u);
+		Usuarios usr=usuarioDAO.recuperarUsuario(u);
 		Certificate cert = recuperarClave(usr.getId());
-		//Key key = cert.getPublicKey(); Serializar Key en lugar de Certificate???????????
-		JSONSerializer serializer = new JSONSerializer(); 
-		String ms=serializer.exclude("*.class").serialize(cert);
-		output.writeObject(ms);
+		EnvCert envio=new EnvCert();
+		envio.certificate=cert;
+		output.writeObject(envio);
 		output.flush();
-		output.close();
 	}
 	/**
-	 * Es la primera vez que intercambian información emisor y receptor
+	 * Es la primera vez que intercambian informaciÃ³n emisor y receptor
 	 * Crea las instancias de los participantes que intervienen y una de mensaje
 	 * @param conversacion fue dada de alta anteriormente 
-	 * @param usu_emisor fue recuperado de la bbdd según la info de quien entabló conversación
-	 * @param usu_recep fue recuperado de la bbdd según la info de quién entabló conversación
-	 * @param sobre viene de quién entabló conversación
+	 * @param usu_emisor fue recuperado de la bbdd segÃºn la info de quien entablÃ³ conversaciÃ³n
+	 * @param usu_recep fue recuperado de la bbdd segÃºn la info de quiÃ©n entablÃ³ conversaciÃ³n
+	 * @param sobre viene de quiÃ©n entablÃ³ conversaciÃ³n
 	 */
 	private void gestionConversacion(Conversaciones conversacion, Usuarios usu_emisor, Usuarios usu_recep, String sobre) {
 		Participantes participantesA=new Participantes();
@@ -325,35 +335,35 @@ class ClientHandler extends Thread {
 		participantesA.setUser(usu_emisor.getId());
 		mensaje.setEmisor(usu_emisor.getId());
 		participantesB.setUser(usu_recep.getId());
-		Conversaciones conv_recup=serv4.recuperarConv(conversacion.getIdConversacion());//Trabajamos con los objetos ya de la bbdd(en lugar de pasarle el id, recuperamos una conver de la bbdd)
+		Conversaciones conv_recup=conversacionDAO.recuperarConv(conversacion.getIdConversacion());//Trabajamos con los objetos ya de la bbdd(en lugar de pasarle el id, recuperamos una conver de la bbdd)
 		participantesA.setIdconversacion(conv_recup.getIdConversacion());
 		participantesB.setIdconversacion(conv_recup.getIdConversacion());
 		mensaje.setReceptor(usu_recep.getId());
 		mensaje.setTexto(sobre);
 		mensaje.setConver(conv_recup.getIdConversacion());
-		serv5.altaParticipantes(participantesA);
-		serv5.altaParticipantes(participantesB);
-		serv2.insertarMensaje(mensaje);
+		participantesDAO.altaParticipantes(participantesA);
+		participantesDAO.altaParticipantes(participantesB);
+		mensajeDAO.insertarMensaje(mensaje);
 	}
 	/**
-	 * Ya existen datos en relación a quién interviene y se van a relacionar los mensajes con la conversación que ya existe
-	 * @param conversacion la que se dió de alta la primera vez
-	 * @param usu_emisor fue recuperado de la bbdd según la info de quien entabló conversación 
-	 * @param usu_recep fue recuperado de la bbdd según la info de quien entabló conversación
-	 * @param sobre viene de quién entabló conversación
+	 * Ya existen datos en relaciÃ³n a quiÃ©n interviene y se van a relacionar los mensajes con la conversaciÃ³n que ya existe
+	 * @param conversacion la que se diÃ³ de alta la primera vez
+	 * @param usu_emisor fue recuperado de la bbdd segÃºn la info de quien entablÃ³ conversaciÃ³n 
+	 * @param usu_recep fue recuperado de la bbdd segÃºn la info de quien entablÃ³ conversaciÃ³n
+	 * @param sobre viene de quiÃ©n entablÃ³ conversaciÃ³n
 	 */
 	private void gestionConversacion2(Conversaciones conversacion, Usuarios usu_emisor, Usuarios usu_recep, String sobre) {
 		Mensajes mensaje=new Mensajes();
-		Conversaciones conv_recup=serv4.recuperarConv(conversacion.getIdConversacion());
+		Conversaciones conv_recup=conversacionDAO.recuperarConv(conversacion.getIdConversacion());
 		mensaje.setEmisor(usu_emisor.getId());
 		mensaje.setReceptor(usu_recep.getId());
 		mensaje.setTexto(sobre);
 		mensaje.setConver(conv_recup.getIdConversacion());
-		serv2.insertarMensaje(mensaje);
+		mensajeDAO.insertarMensaje(mensaje);
 	}
 	/**
-	 * Devuelve la clave del receptor correspondiente en la conversación iniciada
-	 * @param propietario viene de la petición en el cliente
+	 * Devuelve la clave del receptor correspondiente en la conversaciÃ³n iniciada
+	 * @param propietario viene de la peticiÃ³n en el cliente
 	 * @return clave con la clave publica del correspondiente usuario
 	 * @throws Exception capturada en "run()"
 	 */
@@ -385,22 +395,81 @@ class ClientHandler extends Thread {
 	/**
 	 * Envia un token UDP al receptor correspondiente (receptor) para avisar de que hay nuevos mensajes o de que se actualice, depende de "Peticion"
 	 * @param receptor que nos lo proporciona el mensaje desde el cliente emisor
-	 * @throws SQLException La tratará run
+	 * @throws SQLException La tratarÃ¡ run
 	 */
 		private void sendToken(Usuarios receptor) {
 			Conexiones c=null;
 			DatagramSocket socketUDP=null;
 			try {
-				c=serv3.obtenerUltimaCon(receptor.getId());//Para saber la última ip que ha tenido el usuario 
+				c=conexionDAO.obtenerUltimaCon(receptor.getId());//Para saber la Ãºltima ip que ha tenido el usuario 
 				socketUDP=new DatagramSocket();
 				DatagramPacket outPacket=new DatagramPacket(TOKEN.getBytes(),TOKEN.length(),InetAddress.getByName(c.getIp()),PORT_UDP);
 				//socketUDP.send(outPacket); HAY QUE CONTEMPLAR LA RECEPCION EN LA PARTE CLIENTE
 			} catch (IOException eSocketEx) {//Incluye la "SocketException"
-				System.out.println("El cliente no está operativo!");
+				System.out.println("El cliente no estÃ¡ operativo!");
 				System.out.println(eSocketEx.getMessage());
-			}finally{//El socket UDP está enviado (y)
+			}finally{//El socket UDP estÃ¡ enviado (y)
 				socketUDP.close();
 			}
+		}
+	
+		private int sacar_id_conversacion(String id_user1,String id_user2,int conver){
+			int id_conver=0;
+			int tamano=0;
+			List<Integer> array1=new ArrayList<Integer>();
+			List<Integer> array2=new ArrayList<Integer>();
+			List <Integer> mayor=new ArrayList<Integer>();
+			List <Integer> menor=new ArrayList<Integer>();
+			
+			array1=participantesDAO.recuperar_id_conversacion(id_user1);
+			array2=participantesDAO.recuperar_id_conversacion(id_user2);
+			
+			if(array1.isEmpty()==false && array2.isEmpty()==false) {
+				if(array1.size()>=array2.size()){
+					for(int i=0;i<array1.size();i++){
+						mayor.add(i,array1.get(i));
+					}
+					for(int i=0;i<array2.size();i++){
+						menor.add(i,array2.get(i));
+					}
+				}else{
+					if(array1.size()<=array2.size()){
+						for(int i=0;i<array2.size();i++){
+							mayor.add(i,array2.get(i));
+						}
+						for(int i=0;i<array1.size();i++){
+							menor.set(i,array1.get(i));
+						}
+					}else{
+						for(int i=0;i<array2.size();i++){
+							mayor.add(i,array1.get(i));
+							menor.add(i,array2.get(i));
+						}
+					}
+				}
+				for(int i=0;i<menor.size();i++){
+					if(mayor.get(i).equals(menor.get(i))){
+						id_conver=mayor.get(i);
+						break;
+					}
+				}
+				if(conver==id_conver && id_conver!=0){
+					id_conver=conver;
+			}else {
+				tamano=mayor.size();
+				id_conver=mayor.get(tamano-1)+1;
+			}
+			}else {if(array1.isEmpty()==true && array2.isEmpty()==false ) {
+				tamano=array2.size();
+				id_conver=array2.get(tamano-1)+1;
+			}else {if(array2.isEmpty()==true && array1.isEmpty()==false) {
+				tamano=array1.size();
+				id_conver=array1.get(tamano-1)+1;
+			}
+				id_conver=1;
+			}	
+			}
+		return id_conver;
 		}
 }
 

@@ -18,6 +18,7 @@ private static final String GETCONVER="select idConversacion from conversaciones
 private static final String INSERTUSCONVER="insert into participantes (user, idConversacion) values(?,?)";
 private static final String GETMENSAJES="select emisor, receptor, texto, conversacion, fecha from mensajes where emisor=?";
 private static final String GETALLUSERS="select distinct idUser, nombre, apellidos from usuarios where idUser!=?";
+private static final String UPDATEUSU="update usuarios set ultima_conexion=? where idUser=?";
 public static String getUser(){
 	return GETUSERID;
 }
@@ -51,5 +52,7 @@ public static String getMensajes(){
 public static String getAllUsers(){
 	return GETALLUSERS;
 }
-
+public static String UpdateUser(){
+	return UPDATEUSU;
+}	
 }

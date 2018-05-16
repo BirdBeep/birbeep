@@ -1,12 +1,10 @@
-package Client1.Modelo;
+package Client.Modelo;
 
-public class PeticionCERT extends Peticion{
+public class PeticionCertificado extends Peticion{
 	private String id;
 	
-	public PeticionCERT(){};
-	
-	public PeticionCERT(String id){
-		super(6);
+	public PeticionCertificado(String id){
+		super(3);
 		this.id=id;
 	}
 

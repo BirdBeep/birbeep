@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import Entidades.Usuarios;
@@ -88,12 +89,12 @@ public class UsuarioDAO {
 		PreparedStatement orden=null;
 		ResultSet datos=null;
 		List<Usuarios> contactos=new ArrayList<Usuarios>();
-		Usuarios usuario=new Usuarios();
 		try {
 			orden =con.prepareStatement(DbQuery.getAllUsers());
 			orden.setString(1, cli.getId());
 			datos=orden.executeQuery();
 			while (datos.next()){
+				Usuarios usuario=new Usuarios();
 				usuario.setId(datos.getString(1));
 				//usuario.setPassword(datos.getString(2));
 				usuario.setNombre(datos.getString(2));
@@ -101,7 +102,6 @@ public class UsuarioDAO {
 				//usuario.setEmail(datos.getString(5));
 				//usuario.setUltimaConexion(datos.getDate(6));
 				contactos.add(usuario);
-				
 			}
 		} catch (SQLException e) {
 			e.getMessage();
@@ -114,5 +114,28 @@ public class UsuarioDAO {
 			}
 		}
 		return contactos;
+	}
+	
+	public void cerrar_usuario(Usuarios usuario) {
+		Calendar cal = Calendar.getInstance();
+	    cal.set(Calendar.YEAR, Calendar.MONTH, Calendar.DATE, Calendar.HOUR_OF_DAY, Calendar.MINUTE);
+	    java.sql.Date now = new java.sql.Date(cal.getTimeInMillis());
+	       
+	       System.out.println(now);
+	       PreparedStatement orden=null;
+			try {
+				orden =con.prepareStatement(DbQuery.UpdateUser());
+				orden.setDate(1, now);
+				orden.setString(2, usuario.getId());
+				orden.executeUpdate();
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			} finally{
+				try {
+					orden.close();
+				} catch (SQLException e) {
+					System.out.println(e.getMessage());
+				}
+			}
 	}
 }
