@@ -1,4 +1,4 @@
-package Entidades;
+package Client.Modelo;
 import java.sql.Date;
 
 public class Usuarios {
@@ -7,9 +7,14 @@ public class Usuarios {
 	private String nombre;
 	private String apellidos;
 	private String email;
-	private Date   ultimaConexion;
+	private Date ultimaConexion;
+	
+	public Usuarios(){}
 
-	public Usuarios(){};
+	public Usuarios(String email, String password){
+		this.email=email;
+		this.password=password;
+	}
 	
 	public String getNombre() {
 		return nombre;

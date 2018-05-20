@@ -1,7 +1,6 @@
-package Entidades;
+package Client.Modelo;
 
 public class Mensajes {
-	private String id;
 	private String emisor;
 	private String receptor;
 	private String texto;
@@ -9,18 +8,13 @@ public class Mensajes {
 	
 	public Mensajes(){};
 	
-	public String getConver() {
-		return conver;
+	public Mensajes(String emisor,String receptor,String texto,String conver){
+		this.emisor=emisor;
+		this.receptor=receptor;
+		this.texto=texto;
+		this.conver=conver;
 	}
-	public void setConver(String conver) {
-		this.conver = conver;
-	}
-	public String getId() {
-		return id;
-	}
-	public void setId(String id) {
-		this.id = id;
-	}
+	
 	public String getEmisor() {
 		return emisor;
 	}
@@ -39,4 +33,12 @@ public class Mensajes {
 	public void setTexto(String texto) {
 		this.texto = texto;
 	}
+	public String getConver() {
+		return conver;
+	}
+
+	public void setConver(String conver) {
+		this.conver = conver;
+	}
+
 }

@@ -4,8 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import Entidades.Conversaciones;
+import Entidades.Mensajes;
+import Entidades.Usuarios;
 import Util.DbQuery;
 
 public class ConversacionDAO {
@@ -59,5 +63,29 @@ public class ConversacionDAO {
 		}
 		return c;
 	}
-	
+	public ArrayList<String> recuperar_id_conversacion(String id_user){
+		ArrayList <String> id=new ArrayList<String>();
+		String conversacion;
+		PreparedStatement orden=null;
+		ResultSet datos=null;
+		try{
+			orden =con.prepareStatement(DbQuery.getConver());
+			orden.setString(1, id_user);
+			datos=orden.executeQuery();
+			if(datos.next()){
+				conversacion=datos.getString(2);
+				id.add(conversacion);
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		} finally{
+			try {
+				orden.close();
+				datos.close();
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			}
+		}
+		return id;
+	}
 }

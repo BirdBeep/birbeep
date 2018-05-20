@@ -4,8 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
+import Entidades.Conversaciones;
 import Entidades.Participantes;
+import Entidades.Usuarios;
 import Util.DbQuery;
 
 public class ParticipantesDAO {
@@ -34,21 +38,24 @@ public class ParticipantesDAO {
 		}
 	}
 	
-	public int recuperarConvPart(String emisor,String id) {
-		int c=-1;
+	
+	public List<Participantes> recuperarTodasConv(Usuarios cli) {
+		List<Participantes> cons=new ArrayList<Participantes>();
 		PreparedStatement orden=null;
 		ResultSet datos=null;
-		try {
+		try{
 			orden =con.prepareStatement(DbQuery.getUsersConver());
-			orden.setString(1,emisor);
-			orden.setString(2, id);
+			orden.setString(1,cli.getId());
 			datos=orden.executeQuery();
 			if(datos.next()){
-				c=datos.getInt(2);
+				Participantes cs = new Participantes();
+				cs.setUser(datos.getString(1));
+				cs.setIdconversacion(datos.getString(2));
+				cons.add(cs);
 			}
-		} catch (SQLException e) {
+		}catch(SQLException e){
 			System.out.println(e.getMessage());
-		} finally{
+		}finally{
 			try {
 				orden.close();
 				datos.close();
@@ -56,7 +63,7 @@ public class ParticipantesDAO {
 				System.out.println(e.getMessage());
 			}
 		}
-		return c;
+		return cons;
 	}
 
 }
