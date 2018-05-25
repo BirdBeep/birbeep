@@ -37,3 +37,8 @@ USUARIO varchar(100),
 ULTIMA_ACTUALIZACION datetime,
 CONSTRAINT pk_conexiones PRIMARY KEY(IDCONEXION),
 CONSTRAINT fk_conexiones_usuarios FOREIGN KEY (USUARIO) REFERENCES USUARIOS(IDUSER));
+
+INSERT INTO USUARIOS VALUES('client1','12345','Sebastian','Faranna','sebastianfaranna@gmail.com',NULL);
+INSERT INTO USUARIOS VALUES('client2','12345','Luis Miguel','Sanchez','luismi.sanchez1@gmail.com',NULL);
+INSERT INTO USUARIOS VALUES('client3','12345','Ruben','Garcia','garcia.benito.ruben@gmail.com',NULL);
+INSERT INTO USUARIOS VALUES('client4','12345','Juan','García','j.garcia@gmail.com', NULL);
