@@ -1,12 +1,12 @@
 package Client.Modelo;
 
-public class PeticionUPDATEUsers extends Peticion{
+public class PeticionUpdateUsuarios extends Peticion{
 	
 	private Usuarios usuario;
 	
-	public PeticionUPDATEUsers(){};
+	public PeticionUpdateUsuarios() {}
 		
-	public PeticionUPDATEUsers( Usuarios usuario) {
+	public PeticionUpdateUsuarios(Usuarios usuario) {
 		super(2);
 		this.usuario=usuario;
 	}

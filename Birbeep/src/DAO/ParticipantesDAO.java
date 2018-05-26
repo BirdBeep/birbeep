@@ -92,4 +92,32 @@ public class ParticipantesDAO {
 		return id;
 	}
 
+	public List<Participantes> recuperarPorConv(Conversaciones conver, Usuarios user) {
+		List<Participantes> part=new ArrayList<Participantes>();
+		PreparedStatement orden=null;
+		ResultSet datos=null;
+		try{
+			orden =con.prepareStatement(DbQuery.getPartConver());
+			orden.setInt(1,conver.getIdConversacion());
+			orden.setString(2, user.getId());
+			datos=orden.executeQuery();
+			if(datos.next()){
+				Participantes cs = new Participantes();
+				cs.setUser(datos.getString(1));
+				//cs.setIdconversacion(datos.getInt(2));
+				part.add(cs);
+			}
+		}catch(SQLException e){
+			System.out.println(e.getMessage());
+		}finally{
+			try {
+				orden.close();
+				datos.close();
+			} catch (SQLException e) {
+				System.out.println(e.getMessage());
+			}
+		}
+		return part;
+	}
+
 }

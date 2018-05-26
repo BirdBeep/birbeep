@@ -1,36 +1,24 @@
 package Main;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.security.Key;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Scanner;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
-
-import DAO.MensajeDAO;
-import DAO.ParticipantesDAO;
+import Client.EnvCert;
 import DAO.ConexionDAO;
 import DAO.ConversacionDAO;
+import DAO.MensajeDAO;
+import DAO.ParticipantesDAO;
 import DAO.UsuarioDAO;
 import Entidades.ConexionMySQL;
 import Entidades.Conexiones;
@@ -38,17 +26,16 @@ import Entidades.Conversaciones;
 import Entidades.Mensajes;
 import Entidades.Participantes;
 import Entidades.Peticion;
-import Entidades.PeticionCERT;
+import Entidades.PeticionCertificado;
 import Entidades.PeticionLOGOUT;
 import Entidades.PeticionLogin;
-import Entidades.PeticionMSG;
+import Entidades.PeticionMensaje;
 import Entidades.PeticionUPDATEConv;
 import Entidades.PeticionUPDATEMsg;
-import Entidades.PeticionUPDATEUsers;
+import Entidades.PeticionUpdateUsuarios;
 import Entidades.Usuarios;
 import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
-import flexjson.transformer.IterableTransformer;
 
 /**
  * 
@@ -91,18 +78,19 @@ class ClientHandler extends Thread {
 		conexionDAO=new ConexionDAO(conexion.getConexion());
 		conversacionDAO=new ConversacionDAO(conexion.getConexion());
 		participantesDAO=new ParticipantesDAO(conexion.getConexion());
+		try {
+			input = new ObjectInputStream(client.getInputStream());
+			output = new ObjectOutputStream(client.getOutputStream());
+		} catch (IOException e) {
+			System.out.println(e.getMessage());
+		}
 	}
 	public void run() {
 		Peticion peticion=null;
 		Object obj =null;
 		int tipo=0;
 		do{
-			try {
-				input = new ObjectInputStream(client.getInputStream());
-				output = new ObjectOutputStream(client.getOutputStream());
-			} catch (IOException ioEx) {
-				System.out.println(ioEx.getMessage());
-			}
+			
 			try {
 				obj=input.readObject();
 				peticion = new JSONDeserializer<Peticion>().deserialize(obj.toString(),Peticion.class);
@@ -122,7 +110,7 @@ class ClientHandler extends Thread {
 				}
 				break;
 			case 2:
-				PeticionUPDATEUsers peticionUPDATEUsers= (PeticionUPDATEUsers) new JSONDeserializer<PeticionUPDATEUsers>().deserialize(obj.toString(),PeticionUPDATEUsers.class);
+				PeticionUpdateUsuarios peticionUPDATEUsers= (PeticionUpdateUsuarios) new JSONDeserializer<PeticionUpdateUsuarios>().deserialize(obj.toString(),PeticionUpdateUsuarios.class);
 				try {
 					actualizarUsuarios(peticionUPDATEUsers);
 				} catch (Exception e) { //Trata la SQLException y las relativas a la obtencion de clave
@@ -146,7 +134,7 @@ class ClientHandler extends Thread {
 				}
 				break;
 			case 5:
-				PeticionMSG peticionMSG= (PeticionMSG) new JSONDeserializer<PeticionMSG>().deserialize(obj.toString(),PeticionMSG.class);
+				PeticionMensaje peticionMSG= (PeticionMensaje) new JSONDeserializer<PeticionMensaje>().deserialize(obj.toString(),PeticionMensaje.class);
 				try {
 					recibirMensaje(peticionMSG);
 				} catch (IOException e) {
@@ -154,7 +142,7 @@ class ClientHandler extends Thread {
 				}
 				break;
 			case 6:
-				PeticionCERT peticionCERT= (PeticionCERT) new JSONDeserializer<PeticionCERT>().deserialize(obj.toString(),PeticionCERT.class);
+				PeticionCertificado peticionCERT= (PeticionCertificado) new JSONDeserializer<PeticionCertificado>().deserialize(obj.toString(),PeticionCertificado.class);
 				try {
 					devolverCert(peticionCERT);
 				} catch (Exception e1) {
@@ -214,7 +202,7 @@ class ClientHandler extends Thread {
 	 * @throws Exception capturada en el "run()" para SQLException
 	 * 
 	 */
-	private void actualizarUsuarios(PeticionUPDATEUsers peticion) throws Exception { //PUEDE SER QUE CONVERSACION SEA NULL CUANDO SE ENTABLA POR VEZ PRIMERA???
+	private void actualizarUsuarios(PeticionUpdateUsuarios peticion) throws Exception { //PUEDE SER QUE CONVERSACION SEA NULL CUANDO SE ENTABLA POR VEZ PRIMERA???
 		Usuarios u = new Usuarios();
 		u.setId(peticion.getUsuario().getId());
 		Usuarios cli = usuarioDAO.recuperarUsuario(u);
@@ -251,15 +239,15 @@ class ClientHandler extends Thread {
 	}
 	/**
 	 * Recuperamos todos los mensajes de el usuario correspondiente
-	 * @param peticionUPDMSG con emisor
+	 * @param peticionUPDMSG con usuario
 	 * @throws IOException 
 	 */
 	private void actualizarMensajesConv(PeticionUPDATEMsg peticionUPDMSG) throws IOException {
 		JSONSerializer serializer = new JSONSerializer(); 
-		Usuarios emisor=new Usuarios();
-		emisor.setId(peticionUPDMSG.getEmisor().getId());
+		Usuarios usuario=new Usuarios();
+		usuario.setId(peticionUPDMSG.getEmisor().getId());
 		List<Mensajes> mensajes=new ArrayList<Mensajes>();
-		mensajes=mensajeDAO.recuperarMensajes(emisor);
+		mensajes=mensajeDAO.recuperarMensajes(usuario);
 		for(Mensajes m:mensajes){
 			String ms=serializer.exclude("*.class").serialize(m);
 			output.writeObject(ms);
@@ -275,7 +263,7 @@ class ClientHandler extends Thread {
 	 * @param peticion con los par谩metros necesarios (Emisor, receptor, conversaci贸n, mensaje)
 	 * @throws IOException 
 	 */
-	private void recibirMensaje(PeticionMSG peticion) throws IOException {
+	private void recibirMensaje(PeticionMensaje peticion) throws IOException {
 		Mensajes m = peticion.getMensaje();
 		Usuarios userA = new Usuarios();
 		Usuarios userB = new Usuarios();
@@ -304,20 +292,38 @@ class ClientHandler extends Thread {
 		output.writeObject(ms);
 	}
 	/**
-	 * A trav茅s del usuario que viene por la petici贸n, obtiene su correspondiente certificado
+	 * A trav茅s de la conversaci髇 que viene por la petici贸n, obtiene los correspondientes certificados
 	 * A continuaci贸n lo enviamos por el flujo
 	 * @param peticionCERT
 	 * @throws Exception
 	 */
-	private void devolverCert(PeticionCERT peticionCERT) throws Exception {
-		Usuarios u=new Usuarios();
+	private void devolverCert(PeticionCertificado peticionCERT) throws Exception {
+		List<Certificate> lCertificados=new ArrayList<Certificate>();
+		Conversaciones conver=new Conversaciones();
+		Usuarios user = new Usuarios();
+		user.setId(peticionCERT.getUserId());
+		conver.setIdConversacion(peticionCERT.getId());
+		List<Participantes> participantes=participantesDAO.recuperarPorConv(conver, user);
+		for(Participantes p:participantes){
+			lCertificados.add(recuperarClave(p.getUser()));
+		}
+		for(Certificate c:lCertificados){
+			EnvCert envio=new EnvCert();
+			envio.certificate=c;
+			output.writeObject(envio);
+			output.flush();
+		}
+		output.writeObject(null);
+		
+		/*Usuarios u=new Usuarios();
 		u.setId(peticionCERT.getId());
 		Usuarios usr=usuarioDAO.recuperarUsuario(u);
 		Certificate cert = recuperarClave(usr.getId());
 		EnvCert envio=new EnvCert();
 		envio.certificate=cert;
 		output.writeObject(envio);
-		output.flush();
+		//output.writeObject(new JSONSerializer().exclude("*.class").serialize(envio)); VERSION EnvCert.java EN MAIN TAMBIEN
+		output.flush();*/
 	}
 	/**
 	 * Es la primera vez que intercambian informaci贸n emisor y receptor

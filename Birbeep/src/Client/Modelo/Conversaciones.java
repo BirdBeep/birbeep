@@ -2,13 +2,13 @@ package Client.Modelo;
 import java.sql.Date;
 
 public class Conversaciones {
-	private String idConversacion;
+	private int idConversacion;
 	
-	public String getIdConversacion() {
+	public int getIdConversacion() {
 		return idConversacion;
 	}
 
-	public void setIdConversacion(String idConversacion) {
+	public void setIdConversacion(int idConversacion) {
 		this.idConversacion = idConversacion;
 	}
 	

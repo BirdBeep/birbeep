@@ -21,7 +21,9 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 import Client.Modelo.PeticionMensaje;
+import Client.Modelo.Usuarios;
 import Client.Modelo.Mensajes;
+import Client.Modelo.PeticionCertificado;
 
 public class SSLConexion extends Thread{
 	private static final int PORT = 12345;
@@ -33,7 +35,8 @@ public class SSLConexion extends Thread{
 	private static Listener listener = new Listener();
 	private static Certificate cert;
 	
-	public static void initSSLConexion() {//run NO ES STATIC
+	
+	public void run() {
 		TrustManager[] trustManagers = null;
 		KeyManager[] keyManagers = null;
 		try {

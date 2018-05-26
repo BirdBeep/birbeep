@@ -1,6 +1,5 @@
 package Client.GUI;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -13,6 +12,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -21,8 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.BoxLayout;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -33,18 +36,22 @@ import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneLayout;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import Client.SSLConexion;
+import Client.Security;
 import Client.Sender;
 import Client.Modelo.Conversaciones;
 import Client.Modelo.Mensajes;
 import Client.Modelo.Peticion;
+import Client.Modelo.PeticionCertificado;
 import Client.Modelo.PeticionLogin;
+import Client.Modelo.PeticionMensaje;
 import Client.Modelo.PeticionUPDATEConv;
 import Client.Modelo.PeticionUPDATEMsg;
-import Client.Modelo.PeticionUPDATEUsers;
+import Client.Modelo.PeticionUpdateUsuarios;
 import Client.Modelo.Usuarios;
 
 public class MainWindow extends JFrame implements Runnable {
@@ -205,79 +212,7 @@ public class MainWindow extends JFrame implements Runnable {
 		btn_login = new JButton();
 		btn_login.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				int errors = 0;
-				int email_lenght = email_login.getText().length();
-				Pattern pattern = Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
-						+ "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$");
-				Matcher mather = pattern.matcher(email_login.getText());
-				Boolean match = mather.find();
-				if (!match) {
-					email_login.setBorder(new LineBorder(Color.RED));
-					email_login.removeAll();
-					if (email_login.getText().length() == 0) {
-						placeholder = new TextPrompt("Este campo es obligatorio", email_login);
-					} else {
-						placeholder = new TextPrompt("Introduzca su e-mail", email_login);
-						label_cargar.setVisible(false);
-						email_login.setBorder(new LineBorder(Color.RED));
-						panel_credenciales.setVisible(true);
-						label_error.setText(" El e-mail es incorrecto");
-						label_error.setVisible(true);
-						new Timer().schedule(new TimerTask() {
-							@Override
-							public void run() {
-								label_error.setVisible(false);
-							}
-						}, 2000);
-					}
-					placeholder.setForeground(Color.RED);
-					placeholder.changeAlpha(0.5f);
-					placeholder.changeStyle(Font.ITALIC);
-					errors++;
-				} else {
-					email_login.setBorder(new EmptyBorder(email_login.getInsets()));
-					email_login.removeAll();
-					placeholder = new TextPrompt("Introduzca su e-mail", email_login);
-					placeholder.changeAlpha(0.5f);
-					placeholder.changeStyle(Font.ITALIC);
-				}
-
-				if (password_login.getPassword().length < 5) {
-					password_login.setBorder(new LineBorder(Color.RED));
-					password_login.removeAll();
-					if (password_login.getPassword().length == 0) {
-						placeholder = new TextPrompt("Este campo es obligatorio", password_login);
-					} else {
-						placeholder = new TextPrompt("Introduzca su contrase\u00f1a", password_login);
-						label_cargar.setVisible(false);
-						password_login.setText(null);
-						password_login.setBorder(new LineBorder(Color.RED));
-						panel_credenciales.setVisible(true);
-						if (!match && email_lenght > 0)
-							label_error.setText(" El e-mail y la contrase\u00f1a son incorrectos");
-						else
-							label_error.setText(" La contrase\u00f1a es incorrecta");
-						label_error.setVisible(true);
-						new Timer().schedule(new TimerTask() {
-							@Override
-							public void run() {
-								label_error.setVisible(false);
-							}
-						}, 2000);
-					}
-					placeholder.setForeground(Color.RED);
-					placeholder.changeAlpha(0.5f);
-					placeholder.changeStyle(Font.ITALIC);
-					errors++;
-				} else {
-					password_login.setBorder(new EmptyBorder(password_login.getInsets()));
-					password_login.removeAll();
-					placeholder = new TextPrompt("Introduzca su contrase\u00f1a", password_login);
-					placeholder.changeAlpha(0.5f);
-					placeholder.changeStyle(Font.ITALIC);
-				}
-
-				if (errors == 0) {
+				if (validar()) {
 					panel_credenciales.setVisible(false);
 					label_cargar.setVisible(true);
 					new Timer().schedule(new TimerTask() {
@@ -349,7 +284,7 @@ public class MainWindow extends JFrame implements Runnable {
 										@Override
 										public void run() {
 											MainWindow.setInterfaz(Thread.currentThread());
-											p = new PeticionUPDATEUsers(user);
+											p = new PeticionUpdateUsuarios(user);
 											sender.setPeticion(p);
 											sender.interrupt();
 											try {
@@ -361,39 +296,7 @@ public class MainWindow extends JFrame implements Runnable {
 												try {
 													TimeUnit.SECONDS.sleep(10);
 												} catch (InterruptedException e2) {
-													panel_lista.removeAll();
-													
-													for (int i = 0; i < convers.size(); i++) {
-														JButton btn_conver = new JButton();
-														btn_conver.addActionListener(new ActionListener() {
-															@Override
-															public void actionPerformed(ActionEvent e) {
-																panel_conver.setVisible(true);
-															}
-														});
-														img_conver = new ImageIcon(
-																this.getClass().getResource("img_conver.png"));
-														btn_conver.setIcon(img_conver);
-														btn_conver.setText(convers.get(i).getIdConversacion());
-														btn_conver.setForeground(Color.BLACK);
-														btn_conver.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 20));
-														btn_conver.setBackground(Color.BLACK);
-														btn_conver.setOpaque(false);
-														panel_lista.add(btn_conver);
-													}
-													btn_ver_conver.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
-													btn_ver_conver.setBackground(mainColor);
-													btn_ver_conver.setOpaque(true);
-													btn_nueva.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 15));
-													btn_nueva.setBackground(Color.BLACK);
-													btn_nueva.setOpaque(false);
-													if (convers.size() < 11)
-														panel_lista.setLayout(new GridLayout(11, 1));
-													else
-														panel_lista.setLayout(new GridLayout(0, 1));
-													panel_lista.paintAll(panel_lista.getGraphics());
-													label_cargar.setVisible(false);
-													
+													cargarConvers();												
 													/*Mensajes*/
 													p = new PeticionUPDATEMsg(user);
 													sender.setPeticion(p);
@@ -493,35 +396,7 @@ public class MainWindow extends JFrame implements Runnable {
 		btn_nueva.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				panel_lista.removeAll();
-				for (int i = 0; i < usuarios.size(); i++) {
-					JButton btn_conver = new JButton();
-					btn_conver.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							panel_conver.setVisible(true);
-						}
-					});
-					img_conver = new ImageIcon(this.getClass().getResource("img_conver.png"));
-					btn_conver.setIcon(img_conver);
-					btn_conver.setText(usuarios.get(i).getNombre());
-					btn_conver.setForeground(Color.BLACK);
-					btn_conver.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 20));
-					btn_conver.setBackground(Color.BLACK);
-					btn_conver.setOpaque(false);
-					panel_lista.add(btn_conver);
-				}
-				btn_nueva.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
-				btn_nueva.setBackground(mainColor);
-				btn_nueva.setOpaque(true);
-				btn_ver_conver.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 15));
-				btn_ver_conver.setBackground(Color.BLACK);
-				btn_ver_conver.setOpaque(false);
-				if (usuarios.size() < 11)
-					panel_lista.setLayout(new GridLayout(11, 1));
-				else
-					panel_lista.setLayout(new GridLayout(0, 1));
-				panel_lista.paintAll(panel_lista.getGraphics());
+				cargarUsuarios();
 			}
 		});
 		btn_nueva.setText(" Nueva Conversaci\u00f3n ");
@@ -535,49 +410,10 @@ public class MainWindow extends JFrame implements Runnable {
 		btn_ver_conver.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				panel_lista.removeAll();
-				for (int i = 0; i < convers.size(); i++) {
-					btn_conver = new JButton();
-					btn_conver.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							panel_chat.removeAll();
-							label_nombre_conver.setText(btn_conver.getText());
-							for (int i = 0; i < mensajes.size(); i++) {
-								JLabel label_msg_chat = new JLabel(mensajes.get(i).getTexto());
-								label_msg_chat.setBorder(new LineBorder(Color.LIGHT_GRAY));
-								label_msg_chat.setBounds(50, 100 * i + 50, 200, 50);
-								label_msg_chat.setForeground(Color.BLACK);
-								label_msg_chat.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 16));
-								label_msg_chat.setBackground(Color.YELLOW);
-								label_msg_chat.setOpaque(true);
-								panel_chat.add(label_msg_chat);
-							}
-							panel_conver.setVisible(true);
-						}
-					});
-					img_conver = new ImageIcon(this.getClass().getResource("img_conver.png"));
-					btn_conver.setIcon(img_conver);
-					btn_conver.setText(convers.get(i).getIdConversacion());
-					btn_conver.setForeground(Color.BLACK);
-					btn_conver.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 20));
-					btn_conver.setBackground(Color.BLACK);
-					btn_conver.setOpaque(false);
-					panel_lista.add(btn_conver);
-				}
-				btn_ver_conver.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
-				btn_ver_conver.setBackground(mainColor);
-				btn_ver_conver.setOpaque(true);
-				btn_nueva.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 15));
-				btn_nueva.setBackground(Color.BLACK);
-				btn_nueva.setOpaque(false);
-				if (convers.size() < 11)
-					panel_lista.setLayout(new GridLayout(11, 1));
-				else
-					panel_lista.setLayout(new GridLayout(0, 1));
-				panel_lista.paintAll(panel_lista.getGraphics());
+					cargarConvers();
 			}
-		});
+		
+			});
 		btn_ver_conver.setText(" Conversaciones ");
 		btn_ver_conver.setForeground(Color.BLACK);
 		btn_ver_conver.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 15));
@@ -613,25 +449,26 @@ public class MainWindow extends JFrame implements Runnable {
 		panel_datos_conver.add(label_nombre_conver);
 
 		panel_chat = new JPanel();
-		// panel_chat.setBorder(new EmptyBorder(20,20,20,20));
-		// panel_chat.setLayout(new GridLayout(0,3));
-		panel_chat.setLayout(new BorderLayout());
+		//panel_chat.setBorder(new EmptyBorder(20,20,20,20));
+		panel_chat.setLayout(null);
+		//panel_chat.setLayout(new BorderLayout());
 		// panel_chat.setLayout(new BoxLayout(panel_chat, BoxLayout.PAGE_AXIS));
 		panel_chat.setOpaque(false);
 		scroll_chat = new JScrollPane(panel_chat, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scroll_chat.setLayout(new ScrollPaneLayout());
 		scroll_chat.setBounds(0, 70, panel_conver.getSize().width,
-				panel_conver.getSize().height - 130);
+		panel_conver.getSize().height - 130);
 		scroll_chat.setBorder(new LineBorder(Color.LIGHT_GRAY));
 		scroll_chat.setOpaque(false);
 		panel_conver.add(scroll_chat);
 
-		JLabel label_fondo_chat = new JLabel();
-		label_fondo_chat.setBounds(0, 0, scroll_chat.getSize().width, scroll_chat.getSize().height);
-		Icon fondo_chat = new ImageIcon(new ImageIcon(this.getClass().getResource("fondo_conver.jpg")).getImage()
-				.getScaledInstance(label_fondo_chat.getWidth(), label_fondo_chat.getHeight(), Image.SCALE_DEFAULT));
-		label_fondo_chat.setIcon(fondo_chat);
-		panel_chat.add(label_fondo_chat);
+//		JLabel label_fondo_chat = new JLabel();
+//		label_fondo_chat.setBounds(0, 0, scroll_chat.getSize().width, scroll_chat.getSize().height);
+//		Icon fondo_chat = new ImageIcon(new ImageIcon(this.getClass().getResource("fondo_conver.jpg")).getImage()
+//				.getScaledInstance(label_fondo_chat.getWidth(), label_fondo_chat.getHeight(), Image.SCALE_DEFAULT));
+//		label_fondo_chat.setIcon(fondo_chat);
+//		panel_chat.add(label_fondo_chat);
 
 		panel_input = new JPanel();
 		panel_input.setBounds(0, panel_conver.getSize().height - 60, panel_conver.getSize().width, 60);
@@ -690,6 +527,33 @@ public class MainWindow extends JFrame implements Runnable {
 		btn_enviar.setBounds(panel_input.getSize().width * 7 / 8 + 30, 10, panel_input.getSize().width / 8 - 40,
 				panel_input.getSize().height - 20);
 		panel_input.add(btn_enviar);
+		btn_enviar.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+				PeticionMensaje p2=null;
+				PeticionMensaje p3=null;
+				try {
+					p2 = new PeticionMensaje(new Mensajes("client3","client1",Security.cifrar(text_area_input.getText(),SSLConexion.getCert()),1));
+					p3 = new PeticionMensaje(new Mensajes("client3","client3",Security.cifrar(text_area_input.getText(),Security.propioCert()),1));
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				sender.setPeticion(p2);
+				sender.interrupt();//sender.notify()
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				sender.setPeticion(p3);
+				sender.interrupt();//sender.notify()
+			}
+			
+		});
 
 		label_fondo_conver = new JLabel();
 		label_fondo_conver.setBounds(0, 0, getSize().width, getSize().height);
@@ -699,7 +563,191 @@ public class MainWindow extends JFrame implements Runnable {
 		
 
 	}
+	private static boolean validar() {
+		int errors = 0;
+		int email_lenght = email_login.getText().length();
+		Pattern pattern = Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+				+ "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$");
+		Matcher mather = pattern.matcher(email_login.getText());
+		Boolean match = mather.find();
+		if (!match) {
+			email_login.setBorder(new LineBorder(Color.RED));
+			email_login.removeAll();
+			if (email_login.getText().length() == 0) {
+				placeholder = new TextPrompt("Este campo es obligatorio", email_login);
+			} else {
+				placeholder = new TextPrompt("Introduzca su e-mail", email_login);
+				label_cargar.setVisible(false);
+				email_login.setBorder(new LineBorder(Color.RED));
+				panel_credenciales.setVisible(true);
+				label_error.setText(" El e-mail es incorrecto");
+				label_error.setVisible(true);
+				new Timer().schedule(new TimerTask() {
+					@Override
+					public void run() {
+						label_error.setVisible(false);
+					}
+				}, 2000);
+			}
+			placeholder.setForeground(Color.RED);
+			placeholder.changeAlpha(0.5f);
+			placeholder.changeStyle(Font.ITALIC);
+			errors++;
+		} else {
+			email_login.setBorder(new EmptyBorder(email_login.getInsets()));
+			email_login.removeAll();
+			placeholder = new TextPrompt("Introduzca su e-mail", email_login);
+			placeholder.changeAlpha(0.5f);
+			placeholder.changeStyle(Font.ITALIC);
+		}
 
+		if (password_login.getPassword().length < 5) {
+			password_login.setBorder(new LineBorder(Color.RED));
+			password_login.removeAll();
+			if (password_login.getPassword().length == 0) {
+				placeholder = new TextPrompt("Este campo es obligatorio", password_login);
+			} else {
+				placeholder = new TextPrompt("Introduzca su contrase\u00f1a", password_login);
+				label_cargar.setVisible(false);
+				password_login.setText(null);
+				password_login.setBorder(new LineBorder(Color.RED));
+				panel_credenciales.setVisible(true);
+				if (!match && email_lenght > 0)
+					label_error.setText(" El e-mail y la contrase\u00f1a son incorrectos");
+				else
+					label_error.setText(" La contrase\u00f1a es incorrecta");
+				label_error.setVisible(true);
+				new Timer().schedule(new TimerTask() {
+					@Override
+					public void run() {
+						label_error.setVisible(false);
+					}
+				}, 2000);
+			}
+			placeholder.setForeground(Color.RED);
+			placeholder.changeAlpha(0.5f);
+			placeholder.changeStyle(Font.ITALIC);
+			errors++;
+		} else {
+			password_login.setBorder(new EmptyBorder(password_login.getInsets()));
+			password_login.removeAll();
+			placeholder = new TextPrompt("Introduzca su contrase\u00f1a", password_login);
+			placeholder.changeAlpha(0.5f);
+			placeholder.changeStyle(Font.ITALIC);
+		}
+		if(errors==0) {
+			return true;
+		}else {
+			return false;
+		}
+	}
+	
+	private static void cargarConvers() {
+		panel_lista.removeAll();
+		for (int i = 0; i < convers.size(); i++) {
+			btn_conver = new JButton();
+			final int ind=i;
+			btn_conver.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					p = new PeticionCertificado(convers.get(ind).getIdConversacion(),getUser().getId());
+					sender.setPeticion(p);
+					sender.interrupt();
+					try{
+						TimeUnit.SECONDS.sleep(1);
+					}catch(InterruptedException e2){
+					}
+						panel_chat.removeAll();
+						label_nombre_conver.setText(btn_conver.getText());
+						JLabel label_msg_chat = null;
+						for (int i = 0; i < mensajes.size(); i++) {
+							if(mensajes.get(i).getEmisor().compareTo(user.getId())==0) {
+								try {
+									label_msg_chat = new JLabel(Security.descrifrar(mensajes.get(i).getTexto(),Security.propioCert()));
+									label_msg_chat.setBounds(scroll_chat.getSize().width-250, 100 * i + 50, 200, 50);
+									label_msg_chat.setBackground(Color.GREEN);
+								} catch (Exception e1) {
+									System.out.println(e1.getMessage());
+								}
+							}else{
+								try {
+									label_msg_chat = new JLabel(Security.descrifrar(mensajes.get(i).getTexto(),SSLConexion.getCert()));
+									label_msg_chat.setBounds(50, 100 * i + 50, 200, 50);
+									label_msg_chat.setBackground(Color.YELLOW);
+								} catch (Exception e1) {
+									System.out.println(e1.getMessage());
+								}
+							}
+							label_msg_chat.setBorder(new LineBorder(Color.LIGHT_GRAY));
+							label_msg_chat.setForeground(Color.BLACK);
+							label_msg_chat.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 16));
+							label_msg_chat.setOpaque(true);
+							panel_chat.add(label_msg_chat);
+						}
+						panel_conver.setVisible(true);
+						panel_conver.paintAll(panel_conver.getGraphics());
+				}
+			});
+			img_conver = new ImageIcon(MainWindow.class.getResource("img_conver.png"));
+			btn_conver.setIcon(img_conver);
+			btn_conver.setText(String.valueOf(convers.get(i).getIdConversacion()));
+			btn_conver.setForeground(Color.BLACK);
+			btn_conver.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 20));
+			btn_conver.setBackground(Color.BLACK);
+			btn_conver.setOpaque(false);
+			panel_lista.add(btn_conver);
+	}
+		
+		btn_ver_conver.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
+		btn_ver_conver.setBackground(mainColor);
+		btn_ver_conver.setOpaque(true);
+		btn_nueva.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 15));
+		btn_nueva.setBackground(Color.BLACK);
+		btn_nueva.setOpaque(false);
+		if (convers.size() < 11)
+			panel_lista.setLayout(new GridLayout(11, 1));
+		else
+			panel_lista.setLayout(new GridLayout(0, 1));
+		panel_lista.paintAll(panel_lista.getGraphics());
+
+	}
+	
+	private static void cargarUsuarios() {
+		panel_lista.removeAll();
+		for (int i = 0; i < usuarios.size(); i++) {
+			btn_conver = new JButton();
+			btn_conver.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					panel_chat.removeAll();
+					label_nombre_conver.setText(btn_conver.getText());
+					panel_conver.setVisible(true);
+					panel_conver.paintAll(panel_conver.getGraphics());
+				}
+			});
+			img_conver = new ImageIcon(MainWindow.class.getResource("img_conver.png"));
+			btn_conver.setIcon(img_conver);
+			btn_conver.setText(usuarios.get(i).getNombre());
+			btn_conver.setForeground(Color.BLACK);
+			btn_conver.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 20));
+			btn_conver.setBackground(Color.BLACK);
+			btn_conver.setOpaque(false);
+			panel_lista.add(btn_conver);
+	}
+		
+		btn_nueva.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
+		btn_nueva.setBackground(mainColor);
+		btn_nueva.setOpaque(true);
+		btn_ver_conver.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 15));
+		btn_ver_conver.setBackground(Color.BLACK);
+		btn_ver_conver.setOpaque(false);
+		if (usuarios.size() < 11)
+			panel_lista.setLayout(new GridLayout(11, 1));
+		else
+			panel_lista.setLayout(new GridLayout(0, 1));
+		panel_lista.paintAll(panel_lista.getGraphics());
+	
+	}
 	public static SSLConexion getSsl() {
 		return ssl;
 	}

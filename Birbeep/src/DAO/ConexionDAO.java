@@ -21,9 +21,13 @@ public class ConexionDAO {
 	}
 	
 	public void altaConexion(Conexiones conexion) {
+		DateFormat ultiCon = new SimpleDateFormat();
 		Calendar cal = Calendar.getInstance();
-		cal.set(Calendar.YEAR, Calendar.MONTH, Calendar.DATE, Calendar.HOUR_OF_DAY, Calendar.MINUTE);
+		ultiCon.setCalendar(cal);
+		//cal.set(Calendar.YEAR, Calendar.MONTH, Calendar.DAY_OF_MONTH, Calendar.HOUR_OF_DAY, Calendar.MINUTE);
 		java.sql.Date now = new java.sql.Date(cal.getTimeInMillis());
+		
+		
 	    PreparedStatement orden=null;
 		try {
 			orden =con.prepareStatement(DbQuery.insertConexion());

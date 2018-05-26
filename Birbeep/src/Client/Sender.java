@@ -26,6 +26,7 @@ public class Sender extends Thread {
 	private List<Conversaciones> convers;
 	private List<Mensajes> mensajes;
 	private boolean ok = true;
+	int i=0;
 	public void run() {
 		socket = SSLConexion.getSocket();
 		try {
@@ -86,14 +87,22 @@ public class Sender extends Thread {
 							break;
 						case 5:
 							Mensajes mensaje = new JSONDeserializer<Mensajes>().deserialize(ois.readObject().toString(),Mensajes.class);
-							System.out.println(Security.descrifrar(mensaje.getTexto()));
+							/*if(i==1){
+								System.out.println(Security.descrifrar(mensaje.getTexto(),Security.propioCert()));
+							}
+							i++;*/
 							break;
 						case 6:
-							Object o = ois.readObject();
-							if (o instanceof EnvCert){
-								EnvCert certif=(EnvCert) o;
-								SSLConexion.setCert(certif.certificate);
-							}
+							//Object o = new JSONDeserializer<EnvCert>().deserialize(ois.readObject().toString(),EnvCert.class); VERSION EnvCert.java EN MAIN TAMBIEN
+							Object o=null;
+							do{
+								o = ois.readObject();
+								if (o instanceof EnvCert){
+									EnvCert certif=(EnvCert) o;
+									SSLConexion.setCert(certif.certificate);
+								}
+							}while(o!=null);
+							//MainWindow.getInterfaz().interrupt();
 							break;
 						case 7:
 							ok=false;

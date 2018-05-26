@@ -1,18 +1,30 @@
 package Entidades;
 
 public class PeticionCertificado extends Peticion{
-	private String id;
+	private int id;
+	private String usu;
 	
-	public PeticionCertificado(String id){
-		super(3);
-		this.id=id;
+	public String getUserId() {
+		return usu;
 	}
 
-	public String getId() {
+	public void setUserId(String usu) {
+		this.usu = usu;
+	}
+
+	public PeticionCertificado(){};
+	
+	public PeticionCertificado(int id,String usu){
+		super(6);
+		this.id=id;
+		this.usu=usu;
+	}
+
+	public int getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 	
